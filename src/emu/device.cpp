@@ -84,10 +84,6 @@ device_t::~device_t()
 
 memory_region *device_t::memregion(std::string _tag) const
 {
-	// safety first
-	if (this == nullptr)
-		return nullptr;
-
 	// build a fully-qualified name and look it up
 	return machine().memory().region(subtag(_tag));
 }
@@ -100,10 +96,6 @@ memory_region *device_t::memregion(std::string _tag) const
 
 memory_share *device_t::memshare(std::string _tag) const
 {
-	// safety first
-	if (this == nullptr)
-		return nullptr;
-
 	// build a fully-qualified name and look it up
 	return machine().memory().shared(subtag(_tag));
 }
@@ -132,10 +124,6 @@ memory_bank *device_t::membank(std::string _tag) const
 
 ioport_port *device_t::ioport(std::string tag) const
 {
-	// safety first
-	if (this == nullptr)
-		return nullptr;
-
 	// build a fully-qualified name and look it up
 	return machine().ioport().port(subtag(tag));
 }
@@ -148,10 +136,6 @@ ioport_port *device_t::ioport(std::string tag) const
 
 std::string device_t::parameter(std::string tag) const
 {
-	// safety first
-	if (this == nullptr)
-		return std::string();
-
 	// build a fully-qualified name and look it up
 	return machine().parameters().lookup(subtag(tag));
 }
