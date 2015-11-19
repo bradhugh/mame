@@ -108,10 +108,6 @@ memory_share *device_t::memshare(std::string _tag) const
 
 memory_bank *device_t::membank(std::string _tag) const
 {
-	// safety first
-	if (this == nullptr)
-		return nullptr;
-
 	// build a fully-qualified name and look it up
 	return machine().memory().bank(subtag(_tag));
 }
