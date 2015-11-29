@@ -1765,7 +1765,7 @@ ymf271_device::ymf271_device(const machine_config &mconfig, std::string tag, dev
 	, m_irq_handler(*this)
 	, m_ext_read_handler(*this)
 	, m_ext_write_handler(*this)
-	, m_mem_region(*this, tag)
+	, m_mem_region(*this, this->tag())
 	, m_clock(0)
 	, m_timA(NULL)
 	, m_timB(NULL)
