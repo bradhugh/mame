@@ -98,11 +98,11 @@ class segac2_state : public md_base_state
 {
 public:
 	segac2_state(const machine_config &mconfig, device_type type, std::string tag)
-		: md_base_state(mconfig, type, tag),
-		, m_paletteram(*this, "paletteram"),
+		: md_base_state(mconfig, type, tag)
+		, m_paletteram(*this, "paletteram")
 		, m_upd_region(*this, "upd")
-		, m_upd7759(*this, "upd"),
-		, m_screen(*this, "screen"),
+		, m_upd7759(*this, "upd")
+		, m_screen(*this, "screen")
 		, m_palette(*this, "palette")
 		{
 		}
