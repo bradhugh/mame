@@ -149,6 +149,7 @@ scsp_device::scsp_device(const machine_config &mconfig, const char *tag, device_
 		m_roffset(0),
 		m_irq_cb(*this),
 		m_main_irq_cb(*this),
+		m_ram_region(*this, DEVICE_SELF),
 		m_BUFPTR(0),
 		m_SCSPRAM(nullptr),
 		m_SCSPRAM_LENGTH(0),
@@ -502,25 +503,25 @@ void scsp_device::init()
 	SCSPDSP_Init(&m_DSP);
 
 	m_IrqTimA = m_IrqTimBC = m_IrqMidi = 0;
-	m_MidiR=m_MidiW=0;
-	m_MidiOutR=m_MidiOutW=0;
+	m_MidiR=m_MidiW = 0;
+	m_MidiOutR = m_MidiOutW = 0;
 
 	// get SCSP RAM
 	if (strcmp(tag(), ":scsp") == 0 || strcmp(tag(), ":scsp1") == 0)
 	{
-		m_Master=1;
+		m_Master = 1;
 	}
 	else
 	{
-		m_Master=0;
+		m_Master = 0;
 	}
 
-	m_SCSPRAM = region()->base();
-	if (m_SCSPRAM)
+	if (m_ram_region != NULL)
 	{
-		m_SCSPRAM_LENGTH = region()->bytes();
+		m_SCSPRAM = m_ram_region->base();
+		m_SCSPRAM_LENGTH = m_ram_region->bytes();
 		m_DSP.SCSPRAM = (UINT16 *)m_SCSPRAM;
-		m_DSP.SCSPRAM_LENGTH = m_SCSPRAM_LENGTH/2;
+		m_DSP.SCSPRAM_LENGTH = m_SCSPRAM_LENGTH / 2;
 		m_SCSPRAM += m_roffset;
 	}
 
