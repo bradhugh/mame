@@ -10,6 +10,98 @@
 #define __WIN_D3DCOMM__
 
 //============================================================
+//  DEBUGGING
+//============================================================
+
+extern void mtlog_add(const char *event);
+
+
+//============================================================
+//  CONSTANTS
+//============================================================
+
+#define ENABLE_BORDER_PIX   (1)
+
+enum
+{
+    TEXTURE_TYPE_PLAIN,
+    TEXTURE_TYPE_DYNAMIC,
+    TEXTURE_TYPE_SURFACE
+};
+
+//============================================================
+//  INLINES
+//============================================================
+
+static inline BOOL GetClientRectExceptMenu(HWND hWnd, PRECT pRect, BOOL fullscreen)
+{
+    static HMENU last_menu;
+    static RECT last_rect;
+    static RECT cached_rect;
+    HMENU menu = GetMenu(hWnd);
+    BOOL result = GetClientRect(hWnd, pRect);
+
+    if (!fullscreen || !menu)
+        return result;
+
+    // to avoid flicker use cache if we can use
+    if (last_menu != menu || memcmp(&last_rect, pRect, sizeof *pRect) != 0)
+    {
+        last_menu = menu;
+        last_rect = *pRect;
+
+        SetMenu(hWnd, NULL);
+        result = GetClientRect(hWnd, &cached_rect);
+        SetMenu(hWnd, menu);
+    }
+
+    *pRect = cached_rect;
+    return result;
+}
+
+
+static inline UINT32 ycc_to_rgb(UINT8 y, UINT8 cb, UINT8 cr)
+{
+    /* original equations:
+
+    C = Y - 16
+    D = Cb - 128
+    E = Cr - 128
+
+    R = clip(( 298 * C           + 409 * E + 128) >> 8)
+    G = clip(( 298 * C - 100 * D - 208 * E + 128) >> 8)
+    B = clip(( 298 * C + 516 * D           + 128) >> 8)
+
+    R = clip(( 298 * (Y - 16)                    + 409 * (Cr - 128) + 128) >> 8)
+    G = clip(( 298 * (Y - 16) - 100 * (Cb - 128) - 208 * (Cr - 128) + 128) >> 8)
+    B = clip(( 298 * (Y - 16) + 516 * (Cb - 128)                    + 128) >> 8)
+
+    R = clip(( 298 * Y - 298 * 16                        + 409 * Cr - 409 * 128 + 128) >> 8)
+    G = clip(( 298 * Y - 298 * 16 - 100 * Cb + 100 * 128 - 208 * Cr + 208 * 128 + 128) >> 8)
+    B = clip(( 298 * Y - 298 * 16 + 516 * Cb - 516 * 128                        + 128) >> 8)
+
+    R = clip(( 298 * Y - 298 * 16                        + 409 * Cr - 409 * 128 + 128) >> 8)
+    G = clip(( 298 * Y - 298 * 16 - 100 * Cb + 100 * 128 - 208 * Cr + 208 * 128 + 128) >> 8)
+    B = clip(( 298 * Y - 298 * 16 + 516 * Cb - 516 * 128                        + 128) >> 8)
+    */
+    int r, g, b, common;
+
+    common = 298 * y - 298 * 16;
+    r = (common + 409 * cr - 409 * 128 + 128) >> 8;
+    g = (common - 100 * cb + 100 * 128 - 208 * cr + 208 * 128 + 128) >> 8;
+    b = (common + 516 * cb - 516 * 128 + 128) >> 8;
+
+    if (r < 0) r = 0;
+    else if (r > 255) r = 255;
+    if (g < 0) g = 0;
+    else if (g > 255) g = 255;
+    if (b < 0) b = 0;
+    else if (b > 255) b = 255;
+
+    return rgb_t(0xff, r, g, b);
+}
+
+//============================================================
 //  FORWARD DECLARATIONS
 //============================================================
 
@@ -17,6 +109,332 @@ namespace d3d
 {
 class texture_info;
 class renderer;
+
+//============================================================
+//  copyline_palette16
+//============================================================
+
+static inline void copyline_palette16(UINT32 *dst, const UINT16 *src, int width, const rgb_t *palette, int xborderpix)
+{
+    int x;
+
+    assert(xborderpix == 0 || xborderpix == 1);
+    if (xborderpix)
+        *dst++ = 0xff000000 | palette[*src];
+    for (x = 0; x < width; x++)
+        *dst++ = 0xff000000 | palette[*src++];
+    if (xborderpix)
+        *dst++ = 0xff000000 | palette[*--src];
+}
+
+
+//============================================================
+//  copyline_palettea16
+//============================================================
+
+static inline void copyline_palettea16(UINT32 *dst, const UINT16 *src, int width, const rgb_t *palette, int xborderpix)
+{
+    int x;
+
+    assert(xborderpix == 0 || xborderpix == 1);
+    if (xborderpix)
+        *dst++ = palette[*src];
+    for (x = 0; x < width; x++)
+        *dst++ = palette[*src++];
+    if (xborderpix)
+        *dst++ = palette[*--src];
+}
+
+
+//============================================================
+//  copyline_rgb32
+//============================================================
+
+static inline void copyline_rgb32(UINT32 *dst, const UINT32 *src, int width, const rgb_t *palette, int xborderpix)
+{
+    int x;
+
+    assert(xborderpix == 0 || xborderpix == 1);
+
+    // palette (really RGB map) case
+    if (palette != NULL)
+    {
+        if (xborderpix)
+        {
+            rgb_t srcpix = *src;
+            *dst++ = 0xff000000 | palette[0x200 + srcpix.r()] | palette[0x100 + srcpix.g()] | palette[srcpix.b()];
+        }
+        for (x = 0; x < width; x++)
+        {
+            rgb_t srcpix = *src++;
+            *dst++ = 0xff000000 | palette[0x200 + srcpix.r()] | palette[0x100 + srcpix.g()] | palette[srcpix.b()];
+        }
+        if (xborderpix)
+        {
+            rgb_t srcpix = *--src;
+            *dst++ = 0xff000000 | palette[0x200 + srcpix.r()] | palette[0x100 + srcpix.g()] | palette[srcpix.b()];
+        }
+    }
+
+    // direct case
+    else
+    {
+        if (xborderpix)
+            *dst++ = 0xff000000 | *src;
+        for (x = 0; x < width; x++)
+            *dst++ = 0xff000000 | *src++;
+        if (xborderpix)
+            *dst++ = 0xff000000 | *--src;
+    }
+}
+
+
+//============================================================
+//  copyline_argb32
+//============================================================
+
+static inline void copyline_argb32(UINT32 *dst, const UINT32 *src, int width, const rgb_t *palette, int xborderpix)
+{
+    int x;
+
+    assert(xborderpix == 0 || xborderpix == 1);
+
+    // palette (really RGB map) case
+    if (palette != NULL)
+    {
+        if (xborderpix)
+        {
+            rgb_t srcpix = *src;
+            *dst++ = (srcpix & 0xff000000) | palette[0x200 + srcpix.r()] | palette[0x100 + srcpix.g()] | palette[srcpix.b()];
+        }
+        for (x = 0; x < width; x++)
+        {
+            rgb_t srcpix = *src++;
+            *dst++ = (srcpix & 0xff000000) | palette[0x200 + srcpix.r()] | palette[0x100 + srcpix.g()] | palette[srcpix.b()];
+        }
+        if (xborderpix)
+        {
+            rgb_t srcpix = *--src;
+            *dst++ = (srcpix & 0xff000000) | palette[0x200 + srcpix.r()] | palette[0x100 + srcpix.g()] | palette[srcpix.b()];
+        }
+    }
+
+    // direct case
+    else
+    {
+        if (xborderpix)
+            *dst++ = *src;
+        for (x = 0; x < width; x++)
+            *dst++ = *src++;
+        if (xborderpix)
+            *dst++ = *--src;
+    }
+}
+
+
+//============================================================
+//  copyline_yuy16_to_yuy2
+//============================================================
+
+static inline void copyline_yuy16_to_yuy2(UINT16 *dst, const UINT16 *src, int width, const rgb_t *palette, int xborderpix)
+{
+    int x;
+
+    assert(xborderpix == 0 || xborderpix == 2);
+    assert(width % 2 == 0);
+
+    // palette (really RGB map) case
+    if (palette != NULL)
+    {
+        if (xborderpix)
+        {
+            UINT16 srcpix0 = *src++;
+            UINT16 srcpix1 = *src--;
+            *dst++ = palette[0x000 + (srcpix0 >> 8)] | (srcpix0 << 8);
+            *dst++ = palette[0x000 + (srcpix0 >> 8)] | (srcpix1 << 8);
+        }
+        for (x = 0; x < width; x += 2)
+        {
+            UINT16 srcpix0 = *src++;
+            UINT16 srcpix1 = *src++;
+            *dst++ = palette[0x000 + (srcpix0 >> 8)] | (srcpix0 << 8);
+            *dst++ = palette[0x000 + (srcpix1 >> 8)] | (srcpix1 << 8);
+        }
+        if (xborderpix)
+        {
+            UINT16 srcpix1 = *--src;
+            UINT16 srcpix0 = *--src;
+            *dst++ = palette[0x000 + (srcpix1 >> 8)] | (srcpix0 << 8);
+            *dst++ = palette[0x000 + (srcpix1 >> 8)] | (srcpix1 << 8);
+        }
+    }
+
+    // direct case
+    else
+    {
+        if (xborderpix)
+        {
+            UINT16 srcpix0 = *src++;
+            UINT16 srcpix1 = *src--;
+            *dst++ = (srcpix0 >> 8) | (srcpix0 << 8);
+            *dst++ = (srcpix0 >> 8) | (srcpix1 << 8);
+        }
+        for (x = 0; x < width; x += 2)
+        {
+            UINT16 srcpix0 = *src++;
+            UINT16 srcpix1 = *src++;
+            *dst++ = (srcpix0 >> 8) | (srcpix0 << 8);
+            *dst++ = (srcpix1 >> 8) | (srcpix1 << 8);
+        }
+        if (xborderpix)
+        {
+            UINT16 srcpix1 = *--src;
+            UINT16 srcpix0 = *--src;
+            *dst++ = (srcpix1 >> 8) | (srcpix0 << 8);
+            *dst++ = (srcpix1 >> 8) | (srcpix1 << 8);
+        }
+    }
+}
+
+
+//============================================================
+//  copyline_yuy16_to_uyvy
+//============================================================
+
+static inline void copyline_yuy16_to_uyvy(UINT16 *dst, const UINT16 *src, int width, const rgb_t *palette, int xborderpix)
+{
+    int x;
+
+    assert(xborderpix == 0 || xborderpix == 2);
+    assert(width % 2 == 0);
+
+    // palette (really RGB map) case
+    if (palette != NULL)
+    {
+        if (xborderpix)
+        {
+            UINT16 srcpix0 = *src++;
+            UINT16 srcpix1 = *src--;
+            *dst++ = palette[0x100 + (srcpix0 >> 8)] | (srcpix0 & 0xff);
+            *dst++ = palette[0x100 + (srcpix0 >> 8)] | (srcpix1 & 0xff);
+        }
+        for (x = 0; x < width; x += 2)
+        {
+            UINT16 srcpix0 = *src++;
+            UINT16 srcpix1 = *src++;
+            *dst++ = palette[0x100 + (srcpix0 >> 8)] | (srcpix0 & 0xff);
+            *dst++ = palette[0x100 + (srcpix1 >> 8)] | (srcpix1 & 0xff);
+        }
+        if (xborderpix)
+        {
+            UINT16 srcpix1 = *--src;
+            UINT16 srcpix0 = *--src;
+            *dst++ = palette[0x100 + (srcpix1 >> 8)] | (srcpix0 & 0xff);
+            *dst++ = palette[0x100 + (srcpix1 >> 8)] | (srcpix1 & 0xff);
+        }
+    }
+
+    // direct case
+    else
+    {
+        if (xborderpix)
+        {
+            UINT16 srcpix0 = src[0];
+            UINT16 srcpix1 = src[1];
+            *dst++ = srcpix0;
+            *dst++ = (srcpix0 & 0xff00) | (srcpix1 & 0x00ff);
+        }
+        for (x = 0; x < width; x += 2)
+        {
+            *dst++ = *src++;
+            *dst++ = *src++;
+        }
+        if (xborderpix)
+        {
+            UINT16 srcpix1 = *--src;
+            UINT16 srcpix0 = *--src;
+            *dst++ = (srcpix1 & 0xff00) | (srcpix0 & 0x00ff);
+            *dst++ = srcpix1;
+        }
+    }
+}
+
+
+//============================================================
+//  copyline_yuy16_to_argb
+//============================================================
+
+static inline void copyline_yuy16_to_argb(UINT32 *dst, const UINT16 *src, int width, const rgb_t *palette, int xborderpix)
+{
+    int x;
+
+    assert(xborderpix == 0 || xborderpix == 2);
+    assert(width % 2 == 0);
+
+    // palette (really RGB map) case
+    if (palette != NULL)
+    {
+        if (xborderpix)
+        {
+            UINT16 srcpix0 = src[0];
+            UINT16 srcpix1 = src[1];
+            UINT8 cb = srcpix0 & 0xff;
+            UINT8 cr = srcpix1 & 0xff;
+            *dst++ = ycc_to_rgb(palette[0x000 + (srcpix0 >> 8)], cb, cr);
+            *dst++ = ycc_to_rgb(palette[0x000 + (srcpix0 >> 8)], cb, cr);
+        }
+        for (x = 0; x < width / 2; x++)
+        {
+            UINT16 srcpix0 = *src++;
+            UINT16 srcpix1 = *src++;
+            UINT8 cb = srcpix0 & 0xff;
+            UINT8 cr = srcpix1 & 0xff;
+            *dst++ = ycc_to_rgb(palette[0x000 + (srcpix0 >> 8)], cb, cr);
+            *dst++ = ycc_to_rgb(palette[0x000 + (srcpix1 >> 8)], cb, cr);
+        }
+        if (xborderpix)
+        {
+            UINT16 srcpix1 = *--src;
+            UINT16 srcpix0 = *--src;
+            UINT8 cb = srcpix0 & 0xff;
+            UINT8 cr = srcpix1 & 0xff;
+            *dst++ = ycc_to_rgb(palette[0x000 + (srcpix1 >> 8)], cb, cr);
+            *dst++ = ycc_to_rgb(palette[0x000 + (srcpix1 >> 8)], cb, cr);
+        }
+    }
+
+    // direct case
+    else
+    {
+        if (xborderpix)
+        {
+            UINT16 srcpix0 = src[0];
+            UINT16 srcpix1 = src[1];
+            UINT8 cb = srcpix0 & 0xff;
+            UINT8 cr = srcpix1 & 0xff;
+            *dst++ = ycc_to_rgb(srcpix0 >> 8, cb, cr);
+            *dst++ = ycc_to_rgb(srcpix0 >> 8, cb, cr);
+        }
+        for (x = 0; x < width; x += 2)
+        {
+            UINT16 srcpix0 = *src++;
+            UINT16 srcpix1 = *src++;
+            UINT8 cb = srcpix0 & 0xff;
+            UINT8 cr = srcpix1 & 0xff;
+            *dst++ = ycc_to_rgb(srcpix0 >> 8, cb, cr);
+            *dst++ = ycc_to_rgb(srcpix1 >> 8, cb, cr);
+        }
+        if (xborderpix)
+        {
+            UINT16 srcpix1 = *--src;
+            UINT16 srcpix0 = *--src;
+            UINT8 cb = srcpix0 & 0xff;
+            UINT8 cr = srcpix1 & 0xff;
+            *dst++ = ycc_to_rgb(srcpix1 >> 8, cb, cr);
+            *dst++ = ycc_to_rgb(srcpix1 >> 8, cb, cr);
+        }
+    }
+}
 
 //============================================================
 //  TYPE DEFINITIONS
@@ -237,6 +655,26 @@ struct line_aa_step
 {
 	float                   xoffs, yoffs;               // X/Y deltas
 	float                   weight;                     // weight contribution
+};
+
+
+//============================================================
+//  GLOBALS
+//============================================================
+
+static const line_aa_step line_aa_1step[] =
+{
+    { 0.00f,  0.00f,  1.00f },
+    { 0 }
+};
+
+static const line_aa_step line_aa_4step[] =
+{
+    { -0.25f,  0.00f,  0.25f },
+    { 0.25f,  0.00f,  0.25f },
+    { 0.00f, -0.25f,  0.25f },
+    { 0.00f,  0.25f,  0.25f },
+    { 0 }
 };
 
 

@@ -373,6 +373,10 @@ void windows_osd_interface::extract_video_config()
 		video_config.mode = VIDEO_MODE_D3D;
 	else if (strcmp(stemp, "auto") == 0)
 		video_config.mode = VIDEO_MODE_D3D;
+#if defined (USE_D3D11)
+	else if (strcmp(stemp, "d3d11") == 0)
+        video_config.mode = VIDEO_MODE_D3D11;
+#endif
 	else if (strcmp(stemp, "ddraw") == 0)
 		video_config.mode = VIDEO_MODE_DDRAW;
 	else if (strcmp(stemp, "gdi") == 0)
