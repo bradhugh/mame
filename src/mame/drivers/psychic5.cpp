@@ -714,11 +714,7 @@ static MACHINE_CONFIG_START( psychic5, psychic5_state )
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(53.8)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(0))
-	/* frames per second hand tuned to match game and music speed */
-	MCFG_SCREEN_SIZE(32*8, 32*8)
-	MCFG_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MCFG_SCREEN_RAW_PARAMS(XTAL_12MHz/2,394, 0, 256, 282, 16, 256) // was 53.8 Hz before, assume same as Bombs Away
 	MCFG_SCREEN_UPDATE_DRIVER(psychic5_state, screen_update_psychic5)
 
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", psychic5)
@@ -770,10 +766,7 @@ static MACHINE_CONFIG_START( bombsa, psychic5_state )
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(54)                /* Guru says : VSync - 54Hz . HSync - 15.25kHz */
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(0))
-	MCFG_SCREEN_SIZE(64*8, 32*8)
-	MCFG_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MCFG_SCREEN_RAW_PARAMS(XTAL_12MHz/2,394, 0, 256, 282, 16, 256) /* Guru says : VSync - 54Hz . HSync - 15.25kHz */
 	MCFG_SCREEN_UPDATE_DRIVER(psychic5_state, screen_update_bombsa)
 
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", bombsa)
@@ -954,4 +947,4 @@ ROM_END
 
 GAME( 1987, psychic5,  0,        psychic5, psychic5, driver_device, 0, ROT270, "Jaleco / NMK", "Psychic 5 (World)", MACHINE_SUPPORTS_SAVE ) // "Oversea's version V2.00 CHANGED BY TAMIO NAKASATO" text present in ROM, various modifications (English names, more complete attract demo etc.)
 GAME( 1987, psychic5j, psychic5, psychic5, psychic5, driver_device, 0, ROT270, "Jaleco / NMK", "Psychic 5 (Japan)", MACHINE_SUPPORTS_SAVE )
-GAME( 1988, bombsa,    0,        bombsa,   bombsa,   driver_device, 0, ROT270, "Jaleco", "Bombs Away", MACHINE_NOT_WORKING | MACHINE_SUPPORTS_SAVE )
+GAME( 1988, bombsa,    0,        bombsa,   bombsa,   driver_device, 0, ROT270, "Jaleco", "Bombs Away", MACHINE_IS_INCOMPLETE | MACHINE_SUPPORTS_SAVE )
