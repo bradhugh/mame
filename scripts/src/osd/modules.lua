@@ -129,6 +129,12 @@ function osdmodulesbuild()
 			"USE_QTDEBUG=0",
 		}
 	end
+	
+	if _OPTIONS["USE_DIRECTWRITE"]=="1" then
+		files {
+			MAME_DIR .. "src/osd/modules/font/font_dwrite.cpp",
+		}
+	end
 
 end
 
@@ -427,6 +433,27 @@ if _OPTIONS["USE_XAUDIO2"]=="1" then
 else
 	defines {
 		"USE_XAUDIO2=0",
+	}
+end
+
+newoption {
+	trigger = "USE_DIRECTWRITE",
+	description = "Use DirectWrite API for fonts",
+	allowed = {
+		{ "0",  "Disable DirectWrite"  },
+		{ "1",  "Enable DirectWrite" },
+	},
+}
+
+if _OPTIONS["USE_DIRECTWRITE"]=="1" then
+	_OPTIONS["MODERN_WIN_API"] = "1",
+	defines {
+		"USE_DIRECTWRITE=1",
+	},
+	links {
+		"d2d1",
+		"dwrite",
+		"ole32",
 	}
 end
 
