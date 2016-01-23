@@ -28,6 +28,9 @@ enum {
 #if (USE_OPENGL)
 	VIDEO_MODE_OPENGL,
 #endif
+#if defined (USE_D3D11)
+    VIDEO_MODE_D3D11,
+#endif
 	VIDEO_MODE_D3D
 };
 

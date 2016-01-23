@@ -99,6 +99,25 @@ if _OPTIONS["CYGWIN_BUILD"] == "1" then
 	}
 end
 
+newoption {
+	trigger = "USE_D3D11",
+	description = "Use Direct3D 11 API for graphics",
+	allowed = {
+		{ "0",  "Disable Direct3D 11"  },
+		{ "1",  "Enable Direct3D 11" },
+	},
+}
+
+if not _OPTIONS["USE_D3D11"] then
+	_OPTIONS["USE_D3D11"] = "0"
+end
+
+if _OPTIONS["USE_D3D11"]=="1" then
+	_OPTIONS["MODERN_WIN_API"] = "1",
+	defines {
+		"USE_D3D11=1",
+	}
+end
 
 project ("qtdbg_" .. _OPTIONS["osd"])
 	uuid (os.uuid("qtdbg_" .. _OPTIONS["osd"]))
@@ -204,6 +223,17 @@ project ("osd_" .. _OPTIONS["osd"])
 		MAME_DIR .. "src/osd/modules/debugger/win/debugwin.h",
 	}
 
+	if _OPTIONS["USE_D3D11"] == "1" then
+		files {
+			MAME_DIR .. "src/osd/modules/render/d3d11/d3d11winsdk.h",
+			MAME_DIR .. "src/osd/modules/render/d3d11/d3d11comm.h",
+			MAME_DIR .. "src/osd/modules/render/d3d11/d3d11comm.cpp",
+			MAME_DIR .. "src/osd/modules/render/d3d11/PixelShader.h",
+			MAME_DIR .. "src/osd/modules/render/d3d11/SimpleVertexShader.h",
+			MAME_DIR .. "src/osd/modules/render/drawd3d11.h",
+			MAME_DIR .. "src/osd/modules/render/drawd3d11.cpp",
+		}
+	end
 
 project ("ocore_" .. _OPTIONS["osd"])
 	uuid (os.uuid("ocore_" .. _OPTIONS["osd"]))
