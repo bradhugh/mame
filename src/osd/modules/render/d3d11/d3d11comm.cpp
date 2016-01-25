@@ -63,8 +63,6 @@ namespace d3d11
             break;
 
         case D3D_FEATURE_LEVEL_10_0:
-            break;
-                
         case D3D_FEATURE_LEVEL_10_1:
             max_texture_dim = D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
             break;
