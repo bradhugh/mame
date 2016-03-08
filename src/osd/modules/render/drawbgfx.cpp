@@ -9,7 +9,7 @@
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
-#if defined(SDLMAME_WIN32) || defined(OSD_WINDOWS)
+#if defined(SDLMAME_WIN32) || defined(OSD_WINDOWS) || defined(OSD_WINRT)
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -119,8 +119,10 @@ int renderer_bgfx::create()
 			memset(&blank_pd, 0, sizeof(bgfx::PlatformData));
 			bgfx::setPlatformData(blank_pd);
 		}
-#ifdef OSD_WINDOWS
+#if defined(OSD_WINDOWS)
 		bgfx::winSetHwnd(window().m_hwnd);
+#elif defined(OSD_WINRT)
+		// TODO: bgfx::winrtSetWindow(Windows::UI::Core::CoreWindow::GetForCurrentThread());
 #else
 		bgfx::sdlSetWindow(window().sdl_window());
 #endif
@@ -139,7 +141,7 @@ int renderer_bgfx::create()
 
 	if (window().m_index != 0)
 	{
-#ifdef OSD_WINDOWS
+#if defined(OSD_WINDOWS) || defined(OSD_WINRT)
 		m_framebuffer = m_targets->create_target("backbuffer", window().m_hwnd, m_width[window().m_index], m_height[window().m_index]);
 #else
 		m_framebuffer = m_targets->create_target("backbuffer", sdlNativeWindowHandle(window().sdl_window()), m_width[window().m_index], m_height[window().m_index]);
@@ -772,7 +774,7 @@ int renderer_bgfx::draw(int update)
 		{
 			bgfx::reset(window().m_main->get_size().width(), window().m_main->get_size().height(), video_config.waitvsync ? BGFX_RESET_VSYNC : BGFX_RESET_NONE);
 			delete m_framebuffer;
-#ifdef OSD_WINDOWS
+#if defined(OSD_WINDOWS) || defined(OSD_WINRT)
 			m_framebuffer = m_targets->create_target("backbuffer", window().m_hwnd, m_width[index], m_height[index]);
 #else
 			m_framebuffer = m_targets->create_target("backbuffer", sdlNativeWindowHandle(window().sdl_window()), m_width[index], m_height[index]);
