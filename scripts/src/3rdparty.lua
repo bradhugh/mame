@@ -169,6 +169,12 @@ if _OPTIONS["vs"]=="intel-15" then
 		}
 end
 
+	if premake.vstudio.iswinrt() then
+		defines {
+			"NO_GETENV"
+		}
+	end
+
 	configuration { }
 
 	files {
@@ -369,7 +375,6 @@ end
 --------------------------------------------------
 -- LUA library objects
 --------------------------------------------------
-
 if _OPTIONS["with-bundled-lua"] then
 project "lua"
 	uuid "d9e2eed1-f1ab-4737-a6ac-863700b1a5a9"
@@ -400,6 +405,13 @@ if _OPTIONS["vs"]=="intel-15" then
 			"/Qwd592", -- error #592: variable "xxx" is used before its value is set
 		}
 end
+
+	if premake.vstudio.iswinrt() then
+		defines {
+			"LUA_USE_C89"
+		}
+	end
+
 	configuration { }
 		defines {
 			"LUA_COMPAT_ALL",
@@ -533,6 +545,12 @@ if _OPTIONS["vs"]=="intel-15" then
 			"/Qwd2557", 			-- remark #2557: comparison between signed and unsigned operands
 		}
 end
+
+	if premake.vstudio.iswinrt() then
+		defines {
+			"SQLITE_OS_WINRT=1"
+		}
+	end
 	configuration { "pnacl" }
 		defines {
 			"SQLITE_OMIT_LOAD_EXTENSION",
@@ -1012,8 +1030,18 @@ project "uv"
 	if _OPTIONS["targetos"]=="windows" then
 		defines {
 			"WIN32_LEAN_AND_MEAN",
-			"_WIN32_WINNT=0x0502",
 		}
+		
+		if premake.vstudio.iswinrt() then
+			defines {
+				"_WIN32_WINNT=0x0602",
+			}
+		else
+			defines {
+				"_WIN32_WINNT=0x0502",
+			}
+		end
+		
         if _ACTION == "vs2013" then
 			files {
 				MAME_DIR .. "3rdparty/libuv/src/win/snprintf.c",

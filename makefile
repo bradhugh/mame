@@ -30,6 +30,8 @@
 # SDL_INI_PATH = .;$HOME/.mame/;ini;
 # SDL2_MULTIAPI = 1
 # NO_USE_MIDI = 1
+# NO_USE_LUA = 0
+# NO_USE_SQLLITE = 0
 # DONT_USE_NETWORK = 1
 # USE_QTDEBUG = 1
 # NO_X11 = 1
@@ -932,6 +934,13 @@ vs2015_xp: generate
 	$(SILENT) $(GENIE) $(PARAMS) $(TARGET_PARAMS) --vs=vs2015-xp vs2015
 ifdef MSBUILD
 	$(SILENT) msbuild $(PROJECTDIR_WIN)/vs2015-xp/$(PROJECT_NAME).sln $(MSBUILD_PARAMS)
+endif
+
+.PHONY: vs2015_uwp
+vs2015_uwp: generate
+	$(SILENT) $(GENIE) $(PARAMS) $(TARGET_PARAMS) --vs=winstore82 --osd=winrt --NO_USE_MIDI=1 --USE_LIBUV=0 --NO_OPENGL=1 vs2015
+ifdef MSBUILD
+	$(SILENT) msbuild $(PROJECTDIR_WIN)/vs2015-winstore82/$(PROJECT_NAME).sln $(MSBUILD_PARAMS)
 endif
 
 #-------------------------------------------------

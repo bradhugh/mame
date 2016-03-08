@@ -360,6 +360,8 @@ function toolchain(_buildDir, _subDir)
 		if "winstore82" == _OPTIONS["vs"] then
 			premake.vstudio.toolset = "v140"
 			premake.vstudio.storeapp = "8.2"
+			local action = premake.action.current()
+			action.vstudio.windowsTargetPlatformVersion = "10.0.10240.0"
 			platforms { "ARM" }
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-winstore82")
 		end
@@ -464,6 +466,9 @@ function toolchain(_buildDir, _subDir)
 		removeflags {
 			"StaticRuntime",
 			"NoExceptions",
+		}
+		defines {
+			"WINRT_BUILD=1",
 		}
 
 	configuration { "mingw*" }
