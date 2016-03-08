@@ -29,7 +29,7 @@
 //  Keyboard translation table
 //============================================================
 
-#if defined(OSD_WINDOWS)
+#if defined(OSD_WINDOWS) || defined(OSD_WINRT)
 #include <windows.h>
 #define KEY_TRANS_ENTRY0(mame, sdlsc, sdlkey, disc, virtual, ascii, UI) { ITEM_ID_##mame, KEY_ ## disc, virtual, ascii, "ITEM_ID_"#mame, (char *) UI }
 #define KEY_TRANS_ENTRY1(mame, sdlsc, sdlkey, disc, virtual, ascii)     { ITEM_ID_##mame, KEY_ ## disc, virtual, ascii, "ITEM_ID_"#mame, (char*) #mame }
@@ -210,7 +210,7 @@ input_item_id keyboard_trans_table::lookup_mame_code(const char *scode)
 }
 
 // Windows specific lookup methods
-#if defined(OSD_WINDOWS)
+#if defined(OSD_WINDOWS) || defined(OSD_WINRT)
 
 input_item_id keyboard_trans_table::map_di_scancode_to_itemid(int scancode)
 {

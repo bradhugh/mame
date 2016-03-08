@@ -374,7 +374,7 @@ public:
 struct key_trans_entry {
 	input_item_id   mame_key;
 
-#if !defined(OSD_WINDOWS)
+#if !defined(OSD_WINDOWS) && !defined(OSD_WINRT)
 	int				sdl_scancode;
 	int             sdl_key;
 #else
@@ -410,7 +410,7 @@ public:
 	input_item_id lookup_mame_code(const char * scode);
 	int lookup_mame_index(const char * scode);
 
-#if defined(OSD_WINDOWS)
+#if defined(OSD_WINDOWS) || defined(OSD_WINRT)
 	input_item_id map_di_scancode_to_itemid(int di_scancode);
 	int vkey_for_mame_code(input_code code);
 #endif
