@@ -122,49 +122,49 @@ const struct io_procs corefile_ioprocs_noclose =
     calls for accessing generic IO
 *********************************************************************/
 
-static void io_generic_seek(struct io_generic *generic, UINT64 offset)
+static void io_generic_seek(struct io_generic *gen, UINT64 offset)
 {
-	generic->procs->seekproc(generic->file, offset, SEEK_SET);
+	gen->procs->seekproc(gen->file, offset, SEEK_SET);
 }
 
 
 
-void io_generic_close(struct io_generic *generic)
+void io_generic_close(struct io_generic *gen)
 {
-	if (generic->procs->closeproc)
-		generic->procs->closeproc(generic->file);
+	if (gen->procs->closeproc)
+		gen->procs->closeproc(gen->file);
 }
 
 
 
-void io_generic_read(struct io_generic *generic, void *buffer, UINT64 offset, size_t length)
+void io_generic_read(struct io_generic *gen, void *buffer, UINT64 offset, size_t length)
 {
 	UINT64 size;
 	size_t bytes_read;
 
-	size = io_generic_size(generic);
+	size = io_generic_size(gen);
 	if (size <= offset)
 	{
 		bytes_read = 0;
 	}
 	else
 	{
-		io_generic_seek(generic, offset);
-		bytes_read = generic->procs->readproc(generic->file, buffer, length);
+		io_generic_seek(gen, offset);
+		bytes_read = gen->procs->readproc(gen->file, buffer, length);
 	}
-	memset(((UINT8 *) buffer) + bytes_read, generic->filler, length - bytes_read);
+	memset(((UINT8 *) buffer) + bytes_read, gen->filler, length - bytes_read);
 }
 
 
 
-void io_generic_write(struct io_generic *generic, const void *buffer, UINT64 offset, size_t length)
+void io_generic_write(struct io_generic *gen, const void *buffer, UINT64 offset, size_t length)
 {
 	UINT64 filler_size = 0;
 	char filler_buffer[1024];
 	size_t bytes_to_write;
 	UINT64 size;
 
-	size = io_generic_size(generic);
+	size = io_generic_size(gen);
 
 	if (size < offset)
 	{
@@ -172,27 +172,27 @@ void io_generic_write(struct io_generic *generic, const void *buffer, UINT64 off
 		offset = size;
 	}
 
-	io_generic_seek(generic, offset);
+	io_generic_seek(gen, offset);
 
 	if (filler_size)
 	{
-		memset(filler_buffer, generic->filler, sizeof(filler_buffer));
+		memset(filler_buffer, gen->filler, sizeof(filler_buffer));
 		do
 		{
 			bytes_to_write = (filler_size > sizeof(filler_buffer)) ? sizeof(filler_buffer) : (size_t) filler_size;
-			generic->procs->writeproc(generic->file, filler_buffer, bytes_to_write);
+			gen->procs->writeproc(gen->file, filler_buffer, bytes_to_write);
 			filler_size -= bytes_to_write;
 		}
 		while(filler_size > 0);
 	}
 
 	if (length > 0)
-		generic->procs->writeproc(generic->file, buffer, length);
+		gen->procs->writeproc(gen->file, buffer, length);
 }
 
 
 
-void io_generic_write_filler(struct io_generic *generic, UINT8 filler, UINT64 offset, size_t length)
+void io_generic_write_filler(struct io_generic *gen, UINT8 filler, UINT64 offset, size_t length)
 {
 	UINT8 buffer[512];
 	size_t this_length;
@@ -202,7 +202,7 @@ void io_generic_write_filler(struct io_generic *generic, UINT8 filler, UINT64 of
 	while(length > 0)
 	{
 		this_length = MIN(length, sizeof(buffer));
-		io_generic_write(generic, buffer, offset, this_length);
+		io_generic_write(gen, buffer, offset, this_length);
 		offset += this_length;
 		length -= this_length;
 	}
@@ -210,7 +210,7 @@ void io_generic_write_filler(struct io_generic *generic, UINT8 filler, UINT64 of
 
 
 
-UINT64 io_generic_size(struct io_generic *generic)
+UINT64 io_generic_size(struct io_generic *gen)
 {
-	return generic->procs->filesizeproc(generic->file);
+	return gen->procs->filesizeproc(gen->file);
 }
