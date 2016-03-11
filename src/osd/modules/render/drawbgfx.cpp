@@ -141,8 +141,10 @@ int renderer_bgfx::create()
 
 	if (window().m_index != 0)
 	{
-#if defined(OSD_WINDOWS) || defined(OSD_WINRT)
+#if defined(OSD_WINDOWS)
 		m_framebuffer = m_targets->create_target("backbuffer", window().m_hwnd, m_width[window().m_index], m_height[window().m_index]);
+#elif defined(OSD_WINRT)
+		m_framebuffer = m_targets->create_target("backbuffer", &window().m_window, m_width[window().m_index], m_height[window().m_index]);
 #else
 		m_framebuffer = m_targets->create_target("backbuffer", sdlNativeWindowHandle(window().sdl_window()), m_width[window().m_index], m_height[window().m_index]);
 #endif
@@ -774,8 +776,10 @@ int renderer_bgfx::draw(int update)
 		{
 			bgfx::reset(window().m_main->get_size().width(), window().m_main->get_size().height(), video_config.waitvsync ? BGFX_RESET_VSYNC : BGFX_RESET_NONE);
 			delete m_framebuffer;
-#if defined(OSD_WINDOWS) || defined(OSD_WINRT)
+#if defined(OSD_WINDOWS)
 			m_framebuffer = m_targets->create_target("backbuffer", window().m_hwnd, m_width[index], m_height[index]);
+#elif defined(OSD_WINRT)
+			m_framebuffer = m_targets->create_target("backbuffer", &window().m_window, m_width[index], m_height[index]);
 #else
 			m_framebuffer = m_targets->create_target("backbuffer", sdlNativeWindowHandle(window().sdl_window()), m_width[index], m_height[index]);
 #endif

@@ -64,9 +64,9 @@ void* __stdcall CreateFile(
 	return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
-#if defined(UNICODE) && __cplusplus
+#if defined(UNICODE)
 void* __stdcall CreateFile(
-	wchar_t *           lpFileName,
+	void *              lpFileName,
 	int                 dwDesiredAccess,
 	int                 dwShareMode,
 	void*               lpSecurityAttributes,

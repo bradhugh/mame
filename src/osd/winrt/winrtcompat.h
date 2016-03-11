@@ -39,17 +39,6 @@ void* __stdcall CreateFile(
 	int                 dwFlagsAndAttributes,
 	void*               hTemplateFile);
 
-#if defined(UNICODE) && __cplusplus
-void* __stdcall CreateFile(
-	wchar_t *           lpFileName,
-	int                 dwDesiredAccess,
-	int                 dwShareMode,
-	void*               lpSecurityAttributes,
-	int                 dwCreationDisposition,
-	int                 dwFlagsAndAttributes,
-	void*               hTemplateFile);
-#endif
-
 #endif // __WINRTCOMPAT_H__
 
 

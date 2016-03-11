@@ -17,7 +17,7 @@
 //  FUNCTION PROTOTYPES
 //============================================================
 
-#if defined(SDLMAME_WIN32) || defined(OSD_WINDOWS)
+#if defined(SDLMAME_WIN32) || defined(OSD_WINDOWS) || defined(OSD_WINRT)
 
 #if defined(SDLMAME_WIN32)
 #define WIN32_LEAN_AND_MEAN

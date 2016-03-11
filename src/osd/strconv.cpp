@@ -6,7 +6,7 @@
 //
 //============================================================
 
-#if defined(SDLMAME_WIN32) || defined(OSD_WINDOWS)
+#if defined(SDLMAME_WIN32) || defined(OSD_WINDOWS) || defined (OSD_WINRT)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
@@ -14,7 +14,7 @@
 // MAMEOS headers
 #include "strconv.h"
 
-#if defined(SDLMAME_WIN32) || defined(OSD_WINDOWS)
+#if defined(SDLMAME_WIN32) || defined(OSD_WINDOWS) || defined (OSD_WINRT)
 //============================================================
 //  astring_from_utf8
 //============================================================
@@ -110,7 +110,8 @@ int osd_uchar_from_osdchar(UINT32 *uchar, const char *osdchar, size_t count)
 {
 	WCHAR wch;
 
-	count = MIN(count, IsDBCSLeadByte(*osdchar) ? 2 : 1);
+	// Bug removed call to IsDBCSLeadByte() which may be needed in some scenarios
+	count = MIN(count, 1);
 	if (MultiByteToWideChar(CP_ACP, 0, osdchar, (DWORD)count, &wch, 1) != 0)
 		*uchar = wch;
 	else

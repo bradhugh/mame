@@ -11,6 +11,10 @@
 #include <windows.h>
 #include <direct.h>
 
+#ifdef WINRT_OSD
+#include <winapifamily.h>
+#endif
+
 // MAME headers
 #include "emu.h"
 
@@ -132,11 +136,13 @@ BOOL win_is_gui_application(void)
 //============================================================
 void osd_subst_env(char **dst, const char *src)
 {
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 	TCHAR buffer[MAX_PATH];
 
 	TCHAR *t_src = tstring_from_utf8(src);
 	ExpandEnvironmentStrings(t_src, buffer, ARRAY_LENGTH(buffer));
 	*dst = utf8_from_tstring(buffer);
+#endif
 }
 
 //-------------------------------------------------
@@ -181,7 +187,11 @@ int lazy_loaded_function::initialize()
 	{
 		for (int i = 0; i < m_dll_names.size(); i++)
 		{
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 			m_module = LoadLibraryW(m_dll_names[i].c_str());
+#else
+			m_module = LoadPackagedLibrary(m_dll_names[i].c_str(), 0);
+#endif
 			if (m_module != NULL)
 				break;
 		}
