@@ -99,6 +99,10 @@ end
 		if _OPTIONS["PROFILE"] then
 			targetsuffix "dp"
 		end
+	
+	if premake.vstudio.iswinrt() then
+		premake.vstudio.needAppxManifest = true
+	end
 
 	configuration { "mingw*" or "vs*" }
 		targetextension ".exe"

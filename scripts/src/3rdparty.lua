@@ -407,8 +407,10 @@ if _OPTIONS["vs"]=="intel-15" then
 end
 
 	if premake.vstudio.iswinrt() then
-		defines {
-			"LUA_USE_C89"
+
+		forcedincludes {
+			MAME_DIR .. "src/osd/winrt/winrtcrtcompat.h"
+			MAME_DIR .. "src/osd/winrt/winrtcompat.h"
 		}
 	end
 
@@ -505,6 +507,13 @@ project "lualibs"
 	includedirs {
 		MAME_DIR .. "3rdparty",
 	}
+
+	if premake.vstudio.iswinrt() then
+		forcedincludes {
+			MAME_DIR .. "src/osd/winrt/winrtcompat.h"
+		}
+	end
+
 	if _OPTIONS["with-bundled-lua"] then
 		includedirs {
 			MAME_DIR .. "3rdparty/lua/src",
@@ -837,6 +846,12 @@ if _OPTIONS["vs"]=="intel-15" then
 			"/Qwd1879", 			-- warning #1879: unimplemented pragma ignored
 		}
 end
+	if premake.vstudio.iswinrt() then
+		defines {
+			"_WIN32_WCE", -- define the WIN CE flavor when compiling for WINRT
+			"UNDER_CE"
+		}
+	end
 	configuration { "vs2015" }
 		buildoptions {
 			"/wd4456", -- warning C4456: declaration of 'xxx' hides previous local declaration
@@ -879,6 +894,12 @@ end
 			"/wd4204", -- warning C4204: nonstandard extension used : non-constant aggregate initializer
 			"/wd4701", -- warning C4701: potentially uninitialized local variable 'xxx' used
 		}
+		
+		if premake.vstudio.iswinrt() then
+			forcedincludes {
+				MAME_DIR .. "src/osd/winrt/winrtcompat.h"
+			}
+		end
 
 	configuration { }
 

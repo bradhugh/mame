@@ -136,13 +136,15 @@ BOOL win_is_gui_application(void)
 //============================================================
 void osd_subst_env(char **dst, const char *src)
 {
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 	TCHAR buffer[MAX_PATH];
 
 	TCHAR *t_src = tstring_from_utf8(src);
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 	ExpandEnvironmentStrings(t_src, buffer, ARRAY_LENGTH(buffer));
-	*dst = utf8_from_tstring(buffer);
+#else
+	wcsncpy(buffer, t_src, ARRAY_LENGTH(buffer));
 #endif
+	*dst = utf8_from_tstring(buffer);
 }
 
 //-------------------------------------------------

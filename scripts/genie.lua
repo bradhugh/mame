@@ -1295,13 +1295,6 @@ configuration { "winphone8* or winstore8*" }
 		"/ignore:4264" -- LNK4264: archiving object file compiled with /ZW into a static library; note that when authoring Windows Runtime types it is not recommended to link with a static library that contains Windows Runtime metadata
 	}
 
-if premake.vstudio.iswinrt() then
-	forcedincludes {
-		MAME_DIR .. "src/osd/winrt/winrtcompat.h"
-	}
-end
-
-
 configuration { }
 
 if (_OPTIONS["SOURCES"] ~= nil) then

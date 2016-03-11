@@ -62,7 +62,7 @@ void (*s_debugger_stack_crawler)() = NULL;
 
 const char *osd_getenv(const char *name)
 {
-	return getenv(name);
+	return nullptr;
 }
 
 

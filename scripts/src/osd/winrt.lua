@@ -65,6 +65,7 @@ project ("osd_" .. _OPTIONS["osd"])
 		MAME_DIR .. "src/osd/winrt/window.h",
 		MAME_DIR .. "src/osd/winrt/winrtcompat.cpp",
 		MAME_DIR .. "src/osd/winrt/winrtcompat.h",
+		MAME_DIR .. "src/osd/winrt/winrtcrtcompat.h",
 		MAME_DIR .. "src/osd/winrt/winrtmain.cpp",
 		MAME_DIR .. "src/osd/winrt/winrtmain.h",
 		MAME_DIR .. "src/osd/osdepend.h",
