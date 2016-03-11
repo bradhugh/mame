@@ -22,7 +22,7 @@ char *getenv(const char *varname)
 	return nullptr;
 }
 
-void* __stdcall CreateFileW(
+extern "C" void* __stdcall CreateFileW(
 	void *              lpFileName,
 	int                 dwDesiredAccess,
 	int                 dwShareMode,
@@ -35,7 +35,7 @@ void* __stdcall CreateFileW(
 	return CreateFile2((wchar_t*)lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition, NULL);
 }
 
-void* __stdcall CreateFileA(
+extern "C" void* __stdcall CreateFileA(
 	const char *        lpFileName,
 	int                 dwDesiredAccess,
 	int                 dwShareMode,
@@ -52,7 +52,7 @@ void* __stdcall CreateFileA(
 	return INVALID_HANDLE_VALUE;
 }
 
-void* __stdcall CreateFile(
+extern "C" void* __stdcall CreateFile(
 	const char *        lpFileName,
 	int                 dwDesiredAccess,
 	int                 dwShareMode,
@@ -64,9 +64,9 @@ void* __stdcall CreateFile(
 	return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
-#if defined(UNICODE)
+#if defined(UNICODE) && defined(__cplusplus)
 void* __stdcall CreateFile(
-	void *              lpFileName,
+	wchar_t *           lpFileName,
 	int                 dwDesiredAccess,
 	int                 dwShareMode,
 	void*               lpSecurityAttributes,

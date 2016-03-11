@@ -6,7 +6,8 @@
 //
 //============================================================
 
-int main(Platform::Array<Platform::String^>^ args)
+#pragma warning(disable:4447)
+int wmain()
 {
 	return 0;
 }
