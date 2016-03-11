@@ -231,7 +231,8 @@ ui_menu_font_ui::ui_menu_font_ui(running_machine &machine, render_container *con
 
 }
 
-#ifdef UI_WINDOWS
+// This GDI Font enumeration will only work for Desktop Apps
+#if defined(UI_WINDOWS) && (WINAPI_FAMILY_APP == WINAPI_FAMILY_DESKTOP_APP)
 //-------------------------------------------------
 //  fonts enumerator CALLBACK
 //-------------------------------------------------
@@ -266,6 +267,10 @@ void ui_menu_font_ui::list()
 
 	// add default string to the top of array
 	m_fonts.insert(m_fonts.begin(), std::string(_("default")));
+}
+#else
+void ui_menu_font_ui::list()
+{
 }
 #endif
 
