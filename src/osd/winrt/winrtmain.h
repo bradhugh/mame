@@ -133,12 +133,27 @@ public:
 	virtual void init(running_machine &machine);
 	virtual void update(bool skip_redraw);
 
+	// video overridables
+	virtual slider_state *get_slider_list() override;
+
 	void video_register() override;
 	bool window_init() override;
 	void window_exit() override;
 	bool video_init() override;
 
 	void extract_video_config();
+
+	// winrt osd specific
+	void poll_input(running_machine &machine);
+
+	winrt_options &options() { return m_options; }
+
+private:
+	void build_slider_list();
+	void update_slider_list();
+
+	winrt_options &     m_options;
+	slider_state *      m_sliders;
 };
 
 namespace MameWinRT

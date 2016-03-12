@@ -96,6 +96,11 @@ static void* sdlNativeWindowHandle(SDL_Window* _window)
 	return nullptr;
 #   endif // BX_PLATFORM_
 }
+#elif defined(OSD_WINRT)
+IInspectable* AsInspectable(Platform::Object^ o)
+{
+	return reinterpret_cast<IInspectable*>(o);
+}
 #endif
 
 int renderer_bgfx::create()
@@ -122,7 +127,7 @@ int renderer_bgfx::create()
 #if defined(OSD_WINDOWS)
 		bgfx::winSetHwnd(window().m_hwnd);
 #elif defined(OSD_WINRT)
-		// TODO: bgfx::winrtSetWindow(Windows::UI::Core::CoreWindow::GetForCurrentThread());
+		bgfx::winrtSetWindow(AsInspectable(window().m_window.Get()));
 #else
 		bgfx::sdlSetWindow(window().sdl_window());
 #endif

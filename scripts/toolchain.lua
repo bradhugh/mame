@@ -467,8 +467,11 @@ function toolchain(_buildDir, _subDir)
 			"StaticRuntime",
 			"NoExceptions",
 		}
+		flags {
+			"WinMain"
+		}
 		defines {
-			"WINRT_BUILD=1",
+			"WINRT_BUILD=1"
 		}
 
 	configuration { "mingw*" }

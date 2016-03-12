@@ -273,19 +273,6 @@ enum
 	KEY_TOTAL
 };
 
-//============================================================
-//  GLOBALS
-//============================================================
-
-// a single rendering target
-static render_target *our_target;
-
-// a single input device
-static input_device *keyboard_device;
-
-// the state of each key
-static UINT8 keyboard_state[KEY_TOTAL];
-
 //**************************************************************************
 //  OPTIONS
 //**************************************************************************
@@ -403,7 +390,6 @@ const options_entry winrt_options::s_option_entries[] =
 	{ nullptr }
 };
 
-
 //============================================================
 //  mini_osd_options
 //============================================================
@@ -420,6 +406,8 @@ winrt_options::winrt_options()
 
 winrt_osd_interface::winrt_osd_interface(winrt_options &options)
 	: osd_common_t(options)
+	, m_options(options)
+	, m_sliders(nullptr)
 {
 }
 
@@ -457,37 +445,16 @@ void winrt_osd_interface::init(running_machine &machine)
 	osd_common_t::init_subsystems();
 
 	// notify listeners of screen configuration
-	/*for (winrt_window_info *info = win_window_list; info != nullptr; info = info->m_next)
+	for (winrt_window_info *info = win_window_list; info != nullptr; info = info->m_next)
 	{
 		machine.output().set_value(string_format("Orientation(%s)", info->m_monitor->devicename()).c_str(), info->m_targetorient);
-	}*/
+	}
 }
 
-
-//============================================================
-//  osd_update
-//============================================================
-
-void winrt_osd_interface::update(bool skip_redraw)
+void winrt_osd_interface::poll_input(running_machine &machine)
 {
-	// get the minimum width/height for the current layout
-	int minwidth, minheight;
-	our_target->compute_minimum_size(minwidth, minheight);
-
-	// make that the size of our target
-	our_target->set_bounds(minwidth, minheight);
-
-	// get the list of primitives for the target at the current size
-	render_primitive_list &primlist = our_target->get_primitives();
-
-	// lock them, and then render them
-	primlist.acquire_lock();
-
-	// do the drawing here
-	primlist.release_lock();
-
-	// after 5 seconds, exit
-	if (machine().time() > attotime::from_seconds(5))
-		machine().schedule_exit();
+	m_keyboard_input->poll_if_necessary(machine);
+	m_mouse_input->poll_if_necessary(machine);
+	m_lightgun_input->poll_if_necessary(machine);
+	m_joystick_input->poll_if_necessary(machine);
 }
-

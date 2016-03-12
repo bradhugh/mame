@@ -21,6 +21,8 @@
 #include "modules/render/drawbgfx.h"
 #include "modules/render/drawnone.h"
 
+using namespace Windows::UI::Core;
+
 //============================================================
 //  GLOBAL VARIABLES
 //============================================================
@@ -32,6 +34,9 @@ static DWORD main_threadid;
 // actual physical resolution
 static int win_physical_width;
 static int win_physical_height;
+
+// event handling
+static DWORD last_event_check;
 
 static HANDLE window_thread;
 static DWORD window_threadid;
@@ -102,7 +107,7 @@ int winrt_window_info::wnd_extra_height()
 bool winrt_osd_interface::window_init()
 {
 	// get the main thread ID before anything else
-	int main_threadid = GetCurrentThreadId();
+	main_threadid = GetCurrentThreadId();
 
 	// set up window class and register it
 	// create_window_class();
@@ -405,6 +410,7 @@ int winrt_window_info::complete_create()
 	//	menu,
 	//	GetModuleHandleUni(),
 	//	nullptr);
+	m_window = Windows::UI::Core::CoreWindow::GetForCurrentThread();
 
 	if (m_window == nullptr)
 		return 1;
@@ -679,4 +685,58 @@ osd_rect winrt_window_info::constrain_to_aspect_ratio(const osd_rect &rect, int 
 	}
 
 	return ret;
+}
+
+//============================================================
+//  winwindow_process_events
+//  (main thread)
+//============================================================
+
+void winwindow_process_events(running_machine &machine, int ingame, bool nodispatch)
+{
+	assert(GetCurrentThreadId() == main_threadid);
+
+	// TODO: Need to handle all the stuff that was in this method as events
+	CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
+
+	// Review: Do we need this now?
+	// update the cursor state after processing events
+	// winwindow_update_cursor_state(machine);
+}
+
+void winrt_osd_interface::update_slider_list()
+{
+	for (winrt_window_info *window = win_window_list; window != nullptr; window = window->m_next)
+	{
+		if (window->m_renderer && window->m_renderer->sliders_dirty())
+		{
+			build_slider_list();
+			return;
+		}
+	}
+}
+
+void winrt_osd_interface::build_slider_list()
+{
+	m_sliders = nullptr;
+	slider_state *curr = m_sliders;
+	for (winrt_window_info *info = win_window_list; info != nullptr; info = info->m_next)
+	{
+		slider_state *window_sliders = info->m_renderer->get_slider_list();
+		if (window_sliders != nullptr)
+		{
+			if (m_sliders == nullptr)
+			{
+				m_sliders = curr = window_sliders;
+			}
+			else
+			{
+				while (curr->next != nullptr)
+				{
+					curr = curr->next;
+				}
+				curr->next = window_sliders;
+			}
+		}
+	}
 }

@@ -117,6 +117,17 @@ private:
 extern winrt_window_info *win_window_list;
 
 //============================================================
+//  PROTOTYPES
+//============================================================
+
+void winwindow_toggle_full_screen(void);
+void winwindow_take_snap(void);
+void winwindow_take_video(void);
+void winwindow_toggle_fsfx(void);
+
+void winwindow_process_events(running_machine &machine, int ingame, bool nodispatch);
+
+//============================================================
 //  rect_width / rect_height
 //============================================================
 

@@ -60,9 +60,59 @@ end
 	end
 	
 	configuration { "vs*" }
-	flags {
-		"Unicode",
-	}
+		flags {
+			"Unicode",
+		}
+	
+		if premake.vstudio.iswinrt() then
+			-- Windows Required Files
+			files {
+				-- Manifest file
+				MAME_DIR .. "src/osd/winrt/Package.appxmanifest",
+				
+				-- Required images
+				MAME_DIR .. "src/osd/winrt/Assets/SplashScreen.scale-200.png",
+				MAME_DIR .. "src/osd/winrt/Assets/StoreLogo.png",
+				MAME_DIR .. "src/osd/winrt/Assets/LockScreenLogo.scale-200.png",
+				MAME_DIR .. "src/osd/winrt/Assets/Square150x150Logo.scale-200.png",
+				MAME_DIR .. "src/osd/winrt/Assets/Square44x44Logo.scale-200.png",
+				MAME_DIR .. "src/osd/winrt/Assets/Square44x44Logo.targetsize-24_altform-unplated.png",
+				MAME_DIR .. "src/osd/winrt/Assets/Wide310x150Logo.scale-200.png",
+			}
+			
+			-- BGFX Files
+			files {
+				-- Effects
+				MAME_DIR .. "bgfx/effects/blit.json",
+				MAME_DIR .. "bgfx/effects/gui_add.json",
+				MAME_DIR .. "bgfx/effects/blit.json",
+				MAME_DIR .. "bgfx/effects/gui_add.json",
+				MAME_DIR .. "bgfx/effects/gui_blend.json",
+				MAME_DIR .. "bgfx/effects/gui_multiply.json",
+				MAME_DIR .. "bgfx/effects/gui_opaque.json",
+				MAME_DIR .. "bgfx/effects/phosphor.json",
+				MAME_DIR .. "bgfx/effects/ratios.json",
+				MAME_DIR .. "bgfx/effects/screen_add.json",
+				MAME_DIR .. "bgfx/effects/screen_blend.json",
+				MAME_DIR .. "bgfx/effects/screen_multiply.json",
+				MAME_DIR .. "bgfx/effects/screen_opaque.json",
+				MAME_DIR .. "bgfx/effects/tint.json",
+				
+				-- Shaders
+				MAME_DIR .. "shaders/dx11/fs_blit.bin",
+				MAME_DIR .. "shaders/dx11/fs_gui.bin",
+				MAME_DIR .. "shaders/dx11/fs_phosphor.bin",
+				MAME_DIR .. "shaders/dx11/fs_ratios.bin",
+				MAME_DIR .. "shaders/dx11/fs_screen.bin",
+				MAME_DIR .. "shaders/dx11/fs_tint.bin",
+				MAME_DIR .. "shaders/dx11/vs_blit.bin",
+				MAME_DIR .. "shaders/dx11/vs_gui.bin",
+				MAME_DIR .. "shaders/dx11/vs_phosphor.bin",
+				MAME_DIR .. "shaders/dx11/vs_ratios.bin",
+				MAME_DIR .. "shaders/dx11/vs_screen.bin",
+				MAME_DIR .. "shaders/dx11/vs_tint.bin",
+			}
+		end
 
 	configuration { "x64", "Release" }
 		targetsuffix "64"
@@ -99,10 +149,6 @@ end
 		if _OPTIONS["PROFILE"] then
 			targetsuffix "dp"
 		end
-	
-	if premake.vstudio.iswinrt() then
-		premake.vstudio.needAppxManifest = true
-	end
 
 	configuration { "mingw*" or "vs*" }
 		targetextension ".exe"

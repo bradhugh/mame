@@ -58,6 +58,7 @@ project ("osd_" .. _OPTIONS["osd"])
 
 	includedirs {
 		MAME_DIR .. "src/osd/winrt",
+		MAME_DIR .. "src/osd/windows",
 	}
 
 	files {
@@ -66,6 +67,7 @@ project ("osd_" .. _OPTIONS["osd"])
 		MAME_DIR .. "src/osd/modules/render/drawnone.cpp",
 		MAME_DIR .. "src/osd/modules/render/drawnone.h",
 		MAME_DIR .. "src/osd/winrt/video.h",
+		MAME_DIR .. "src/osd/winrt/video.cpp",
 		MAME_DIR .. "src/osd/winrt/window.h",
 		MAME_DIR .. "src/osd/winrt/window.cpp",
 		MAME_DIR .. "src/osd/winrt/winrtcompat.cpp",

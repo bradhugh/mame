@@ -163,40 +163,45 @@ static void init_monitors(void)
 	// TODO: Check return
 	CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(factory.GetAddressOf()));
 
-	// TODO: Check return
-	factory->EnumAdapters(0, adapter.GetAddressOf());
-
-	UINT i = 0;
-	ComPtr<IDXGIOutput> output;
-	DXGI_OUTPUT_DESC desc;
-	osd_monitor_info *monitor;
-	while (adapter->EnumOutputs(i, output.GetAddressOf()))
+	UINT iAdapter = 0;
+	while (!factory->EnumAdapters(iAdapter, adapter.ReleaseAndGetAddressOf()))
 	{
-		output->GetDesc(&desc);
-
-		// guess the aspect ratio assuming square pixels
-		RECT * coords = &desc.DesktopCoordinates;
-		float aspect = (float)(coords->right - coords->left) / (float)(coords->bottom - coords->top);
-		
-		// allocate a new monitor info
-		char *temp = utf8_from_wstring(desc.DeviceName);
-
-		// copy in the data
-		monitor = global_alloc(winrt_monitor_info(desc.Monitor, temp, aspect, output.Detach()));
-		osd_free(temp);
-
-		// hook us into the list
-		*tailptr = monitor;
-		tailptr = &monitor->m_next;
-	}
-
-	// if we're verbose, print the list of monitors
-	{
+		UINT i = 0;
+		ComPtr<IDXGIOutput> output;
+		DXGI_OUTPUT_DESC desc;
 		osd_monitor_info *monitor;
-		for (monitor = osd_monitor_info::list; monitor != NULL; monitor = monitor->m_next)
+		while (!adapter->EnumOutputs(i, output.GetAddressOf()))
 		{
-			osd_printf_verbose("Video: Monitor %p = \"%s\" %s\n", monitor->oshandle(), monitor->devicename(), monitor->is_primary() ? "(primary)" : "");
+			output->GetDesc(&desc);
+
+			// guess the aspect ratio assuming square pixels
+			RECT * coords = &desc.DesktopCoordinates;
+			float aspect = (float)(coords->right - coords->left) / (float)(coords->bottom - coords->top);
+
+			// allocate a new monitor info
+			char *temp = utf8_from_wstring(desc.DeviceName);
+
+			// copy in the data
+			monitor = global_alloc(winrt_monitor_info(desc.Monitor, temp, aspect, output.Detach()));
+			osd_free(temp);
+
+			// hook us into the list
+			*tailptr = monitor;
+			tailptr = &monitor->m_next;
+
+			i++;
 		}
+
+		// if we're verbose, print the list of monitors
+		{
+			osd_monitor_info *monitor;
+			for (monitor = osd_monitor_info::list; monitor != NULL; monitor = monitor->m_next)
+			{
+				osd_printf_verbose("Video: Monitor %p = \"%s\" %s\n", monitor->oshandle(), monitor->devicename(), monitor->is_primary() ? "(primary)" : "");
+			}
+		}
+
+		iAdapter++;
 	}
 }
 
@@ -348,4 +353,63 @@ osd_monitor_info *winrt_monitor_info::monitor_from_handle(HMONITOR hmonitor)
 		if (*((HMONITOR *)monitor->oshandle()) == hmonitor)
 			return monitor;
 	return NULL;
+}
+
+//============================================================
+//  update
+//============================================================
+
+void winrt_osd_interface::update(bool skip_redraw)
+{
+	update_slider_list();
+
+	// if we're not skipping this redraw, update all windows
+	if (!skip_redraw)
+	{
+		//      profiler_mark(PROFILER_BLIT);
+		for (winrt_window_info *window = win_window_list; window != NULL; window = window->m_next)
+			window->update();
+		//      profiler_mark(PROFILER_END);
+	}
+
+	// poll the joystick values here
+	winwindow_process_events(machine(), TRUE, FALSE);
+	poll_input(machine());
+	check_osd_inputs(machine());
+	// if we're running, disable some parts of the debugger
+	if ((machine().debug_flags & DEBUG_FLAG_OSD_ENABLED) != 0)
+		debugger_update();
+}
+
+//============================================================
+//  check_osd_inputs
+//============================================================
+
+static void check_osd_inputs(running_machine &machine)
+{
+	// TODO: Fix
+	// check for toggling fullscreen mode
+	//if (machine.ui_input().pressed(IPT_OSD_1))
+	//	winwindow_toggle_full_screen();
+
+	//// check for taking fullscreen snap
+	//if (machine.ui_input().pressed(IPT_OSD_2))
+	//	winwindow_take_snap();
+
+	//// check for taking fullscreen video
+	//if (machine.ui_input().pressed(IPT_OSD_3))
+	//	winwindow_take_video();
+
+	//// check for taking fullscreen video
+	//if (machine.ui_input().pressed(IPT_OSD_4))
+	//	winwindow_toggle_fsfx();
+}
+
+//============================================================
+//  get_slider_list
+//============================================================
+
+slider_state *winrt_osd_interface::get_slider_list()
+{
+	return m_sliders;
 }
