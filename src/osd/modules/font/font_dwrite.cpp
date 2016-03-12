@@ -10,7 +10,7 @@
 
 // We take dependencies on WRL client headers and
 // we can only build with a high enough version
-#if defined(OSD_WINDOWS) && (_WIN32_WINNT >= 0x0602)
+#if (defined(OSD_WINDOWS) || defined(OSD_WINRT)) && (_WIN32_WINNT >= 0x0602)
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -426,7 +426,7 @@ public:
 
 		UINT32 tempChar = chnum;
 		UINT16 glyphIndex;
-		HR_RET0(face->GetGlyphIndicesW(&tempChar, 1, &glyphIndex));
+		HR_RET0(face->GetGlyphIndices(&tempChar, 1, &glyphIndex));
 
 		// get the width of this character
 		DWRITE_GLYPH_METRICS glyph_metrics = { 0 };

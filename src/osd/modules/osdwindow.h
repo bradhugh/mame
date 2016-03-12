@@ -191,6 +191,9 @@ public:
 
 	int                     m_resize_state;
 #elif OSD_WINRT
+	// FIXME: cann we replace winwindow_video_window_monitor(NULL) with monitor() ?
+	virtual osd_monitor_info *winwindow_video_window_monitor(const osd_rect *proposed) = 0;
+
 	Platform::Agile<Windows::UI::Core::CoreWindow^>	m_window;
 #else
 #ERROR What OSD are you?

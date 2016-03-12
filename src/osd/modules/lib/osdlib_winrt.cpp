@@ -22,9 +22,8 @@
 #include "osdcomm.h"
 #include "osdcore.h"
 
-#ifdef OSD_WINDOWS
-#include "winutf8.h"
-#endif
+#include <memory>
+#include <map>
 
 //============================================================
 //  MACROS
@@ -51,9 +50,7 @@
 //  GLOBAL VARIABLES
 //============================================================
 
-#ifdef OSD_WINDOWS
-void (*s_debugger_stack_crawler)() = NULL;
-#endif
+std::map<const char *, std::unique_ptr<char>> g_runtime_environment;
 
 
 //============================================================
@@ -62,6 +59,15 @@ void (*s_debugger_stack_crawler)() = NULL;
 
 const char *osd_getenv(const char *name)
 {
+	for (auto iter = g_runtime_environment.begin(); iter != g_runtime_environment.end(); iter++)
+	{
+		if (stricmp(iter->first, name) == 0)
+		{
+			osd_printf_debug("ENVIRONMENT: Get %s = value: '%s'", name, iter->second.get());
+			return iter->second.get();
+		}
+	}
+
 	return nullptr;
 }
 
@@ -72,23 +78,19 @@ const char *osd_getenv(const char *name)
 
 int osd_setenv(const char *name, const char *value, int overwrite)
 {
-	char *buf;
-	int result;
-
 	if (!overwrite)
 	{
 		if (osd_getenv(name) != nullptr)
 			return 0;
 	}
-	buf = (char *) osd_malloc_array(strlen(name)+strlen(value)+2);
-	sprintf(buf, "%s=%s", name, value);
-	result = 0; // putenv(buf);
 
-	/* will be referenced by environment
-	 * Therefore it is not freed here
-	 */
+	auto buf = std::make_unique<char>(strlen(name) + strlen(value)+2);
+	sprintf(buf.get(), "%s=%s", name, value);
 
-	return result;
+	g_runtime_environment[name] = std::move(buf);
+	osd_printf_debug("ENVIRONMENT: Set %s to value: '%s'", name, buf.get());
+
+	return 0;
 }
 
 //============================================================

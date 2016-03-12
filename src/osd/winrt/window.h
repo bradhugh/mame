@@ -24,6 +24,14 @@
 using namespace Windows::Foundation;
 
 //============================================================
+//  CONSTANTS
+//============================================================
+
+#define RESIZE_STATE_NORMAL     0
+#define RESIZE_STATE_RESIZING   1
+#define RESIZE_STATE_PENDING    2
+
+//============================================================
 //  TYPE DEFINITIONS
 //============================================================
 
@@ -48,16 +56,13 @@ public:
 
 	virtual osd_monitor_info *monitor() const override { return m_monitor; }
 
+	virtual osd_monitor_info *winwindow_video_window_monitor(const osd_rect *proposed) override;
+
 	void destroy();
 
 	// static
 
 	static void create(running_machine &machine, int index, osd_monitor_info *monitor, const osd_window_config *config);
-
-	// static callbacks
-
-	static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
-	static unsigned __stdcall thread_entry(void *param);
 
 	// member variables
 
@@ -99,12 +104,30 @@ private:
 	osd_rect constrain_to_aspect_ratio(const osd_rect &rect, int adjustment);
 	osd_dim get_min_bounds(int constrain);
 	osd_dim get_max_bounds(int constrain);
-	void update_minmax_state();
-	void minimize_window();
-	void maximize_window();
 	void adjust_window_position_after_major_change();
-	void set_fullscreen(int fullscreen);
 
 	running_machine &   m_machine;
 };
+
+//============================================================
+//  GLOBAL VARIABLES
+//============================================================
+
+// windows
+extern winrt_window_info *win_window_list;
+
+//============================================================
+//  rect_width / rect_height
+//============================================================
+
+static inline int rect_width(const RECT *rect)
+{
+	return rect->right - rect->left;
+}
+
+
+static inline int rect_height(const RECT *rect)
+{
+	return rect->bottom - rect->top;
+}
 #endif

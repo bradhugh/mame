@@ -12,13 +12,46 @@
 #include "render.h"
 #include "modules/osdwindow.h"
 
+//============================================================
+//  CONSTANTS
+//============================================================
+
+#define MAX_WINDOWS         1
+
+//============================================================
+//  TYPE DEFINITIONS
+//============================================================
+
+inline osd_rect RECT_to_osd_rect(const RECT &r)
+{
+	return osd_rect(r.left, r.top, r.right - r.left, r.bottom - r.top);
+}
+
+struct dxgi_monitor_info
+{
+	WCHAR DeviceName[32];
+	RECT DesktopCoordinates;
+	BOOL AttachedToDesktop;
+	HMONITOR Monitor;
+};
+
+struct IDXGIOutput;
+
 class winrt_monitor_info : public osd_monitor_info
 {
 public:
-	winrt_monitor_info(float aspect);
+	winrt_monitor_info(const HMONITOR handle, const char *monitor_device, float aspect, IDXGIOutput* output);
 	virtual ~winrt_monitor_info();
 
 	virtual void refresh() override;
+
+	// static
+	static osd_monitor_info *monitor_from_handle(HMONITOR monitor);
+
+private:
+	IDXGIOutput *       m_output;                 // The output interface
+
+	//dxgi_monitor_info	m_info;                   // monitor info
 };
 
 struct osd_video_config

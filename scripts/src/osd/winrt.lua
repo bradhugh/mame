@@ -61,8 +61,13 @@ project ("osd_" .. _OPTIONS["osd"])
 	}
 
 	files {
+		MAME_DIR .. "src/osd/modules/osdwindow.cpp",
+		MAME_DIR .. "src/osd/modules/osdwindow.h",
+		MAME_DIR .. "src/osd/modules/render/drawnone.cpp",
+		MAME_DIR .. "src/osd/modules/render/drawnone.h",
 		MAME_DIR .. "src/osd/winrt/video.h",
 		MAME_DIR .. "src/osd/winrt/window.h",
+		MAME_DIR .. "src/osd/winrt/window.cpp",
 		MAME_DIR .. "src/osd/winrt/winrtcompat.cpp",
 		MAME_DIR .. "src/osd/winrt/winrtcompat.h",
 		MAME_DIR .. "src/osd/winrt/winrtcrtcompat.h",

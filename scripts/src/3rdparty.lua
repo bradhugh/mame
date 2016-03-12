@@ -409,8 +409,8 @@ end
 	if premake.vstudio.iswinrt() then
 
 		forcedincludes {
-			MAME_DIR .. "src/osd/winrt/winrtcrtcompat.h"
-			MAME_DIR .. "src/osd/winrt/winrtcompat.h"
+			MAME_DIR .. "src/osd/winrt/winrtcrtcompat.h",
+			MAME_DIR .. "src/osd/winrt/winrtcompat.h",
 		}
 	end
 
