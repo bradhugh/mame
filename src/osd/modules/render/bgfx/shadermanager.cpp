@@ -18,6 +18,26 @@
 
 #include "shadermanager.h"
 
+#ifndef BGFX_DX9_SHADER_ROOT
+#define BGFX_DX9_SHADER_ROOT "shaders/dx9/"
+#endif
+
+#ifndef BGFX_DX11_SHADER_ROOT
+#define BGFX_DX11_SHADER_ROOT "shaders/dx11/"
+#endif
+
+#ifndef BGFX_OPENGL_SHADER_ROOT
+#define BGFX_OPENGL_SHADER_ROOT "shaders/glsl/"
+#endif
+
+#ifndef BGFX_METAL_SHADER_ROOT
+#define BGFX_METAL_SHADER_ROOT "shaders/metal/"
+#endif
+
+#ifndef BGFX_OPENGLES_SHADER_ROOT
+#define BGFX_OPENGLES_SHADER_ROOT "shaders/gles/"
+#endif
+
 shader_manager::~shader_manager()
 {
 	for (std::pair<std::string, bgfx::ShaderHandle> shader : m_shaders)
@@ -39,24 +59,24 @@ bgfx::ShaderHandle shader_manager::shader(std::string name)
 }
 
 bgfx::ShaderHandle shader_manager::load_shader(std::string name) {
-	std::string shader_path = "shaders/dx9/";
+	std::string shader_path = BGFX_DX9_SHADER_ROOT;
 	switch (bgfx::getRendererType())
 	{
 	case bgfx::RendererType::Direct3D11:
 	case bgfx::RendererType::Direct3D12:
-		shader_path = "shaders/dx11/";
+		shader_path = BGFX_DX11_SHADER_ROOT;
 		break;
 
 	case bgfx::RendererType::OpenGL:
-		shader_path = "shaders/glsl/";
+		shader_path = BGFX_OPENGL_SHADER_ROOT;
 		break;
 
 	case bgfx::RendererType::Metal:
-		shader_path = "shaders/metal/";
+		shader_path = BGFX_METAL_SHADER_ROOT;
 		break;
 
 	case bgfx::RendererType::OpenGLES:
-		shader_path = "shaders/gles/";
+		shader_path = BGFX_OPENGLES_SHADER_ROOT;
 		break;
 
 	default:

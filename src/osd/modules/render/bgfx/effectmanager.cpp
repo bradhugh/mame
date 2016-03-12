@@ -21,6 +21,10 @@
 #include "effectreader.h"
 #include "effect.h"
 
+#ifndef BGFX_EFFECTS_PATH
+#define BGFX_EFFECTS_PATH "bgfx/effects/"
+#endif
+
 using namespace rapidjson;
 
 effect_manager::~effect_manager()
@@ -44,7 +48,7 @@ bgfx_effect* effect_manager::effect(std::string name)
 }
 
 bgfx_effect* effect_manager::load_effect(std::string name) {
-	std::string path = "bgfx/effects/" + name + ".json";
+	std::string path = BGFX_EFFECTS_PATH + name + ".json";
 
 	bx::CrtFileReader reader;
 	bx::open(&reader, path.c_str());
