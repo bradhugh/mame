@@ -27,5 +27,7 @@
   </Applications>
   <Capabilities>
     <Capability Name="internetClient" />
+    <Capability Name="codeGeneration" />
+    <Capability Name="privateNetworkClientServer" />
   </Capabilities>
 </Package>

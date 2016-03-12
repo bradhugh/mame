@@ -239,8 +239,9 @@ void osd_break_into_debugger(const char *message)
 	if (IsDebuggerPresent())
 	{
 		OutputDebugStringA(message);
-		//DebugBreak();
-		_asm int 3;
+		
+		// obviously doesn't work on ARM 
+		// _asm int 3;
 		__debugbreak();
 	}
 #endif
