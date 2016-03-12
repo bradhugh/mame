@@ -158,21 +158,6 @@ private:
 
 namespace MameWinRT
 {
-	// Main View
-	class MameMain
-	{
-	public:
-		MameMain();
-		~MameMain();
-		void CreateWindowSizeDependentResources();
-		void Update();
-		bool Render();
-
-		// IDeviceNotify
-		virtual void OnDeviceLost();
-		virtual void OnDeviceRestored();
-	};
-
 	// Main entry point for our app. Connects the app with the Windows shell and handles application lifecycle events.
 	ref class App sealed : public Windows::ApplicationModel::Core::IFrameworkView
 	{
@@ -203,8 +188,6 @@ namespace MameWinRT
 		void OnDisplayContentsInvalidated(Windows::Graphics::Display::DisplayInformation^ sender, Platform::Object^ args);
 
 	private:
-		//std::shared_ptr<DX::DeviceResources> m_deviceResources;
-		std::unique_ptr<MameMain> m_main;
 		bool m_windowClosed;
 		bool m_windowVisible;
 	};

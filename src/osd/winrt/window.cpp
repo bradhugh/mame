@@ -49,6 +49,10 @@ static HANDLE window_thread_ready_event;
 // minimum window dimension
 #define MIN_WINDOW_DIM                  200
 
+// Logging
+void mtlog_add(const char *event) { }
+static void mtlog_dump(void) { }
+
 winrt_window_info::winrt_window_info(running_machine &machine)
 	: osd_window(), m_next(nullptr),
 	m_init_state(0),
@@ -256,13 +260,60 @@ void winrt_window_info::update()
 
 			// post a redraw request with the primitive list as a parameter
 			last_update_time = osd_ticks();
-			//mtlog_add("winwindow_video_window_update: PostMessage start");
-			// SendMessage(m_hwnd, WM_USER_REDRAW, 0, (LPARAM)primlist);
-			// mtlog_add("winwindow_video_window_update: PostMessage end");
+
+			// mtlog_add("winwindow_video_window_proc: WM_USER_REDRAW begin");
+
+			// For now assume only one window
+			winrt_window_info *window = win_window_list;
+
+			// Previously this was being done as a message
+			window->m_primlist = primlist;
+			window->draw_video_contents(FALSE);
 		}
 	}
 
 	//mtlog_add("winwindow_video_window_update: end");
+}
+
+//============================================================
+//  draw_video_contents
+//  (window thread)
+//============================================================
+
+void winrt_window_info::draw_video_contents(int update)
+{
+	assert(GetCurrentThreadId() == window_threadid);
+
+	//mtlog_add("draw_video_contents: begin");
+
+	//mtlog_add("draw_video_contents: render lock acquire");
+	std::lock_guard<std::mutex> lock(m_render_lock);
+	//mtlog_add("draw_video_contents: render lock acquired");
+
+	// if we're not visible, don't bother
+	if (m_window != nullptr && m_window->Visible)
+	{
+		// if no bitmap, just fill
+		if (m_primlist == nullptr)
+		{
+			// If needed I can use D3d directly from here to do this
+			// However it seems better if I don't
+			/*RECT fill;
+			GetClientRect(m_hwnd, &fill);
+			FillRect(dc, &fill, (HBRUSH)GetStockObject(BLACK_BRUSH));*/
+		}
+
+		// otherwise, render with our drawing system
+		else
+		{
+			m_renderer->draw(update);
+			mtlog_add("draw_video_contents: drawing finished");
+		}
+	}
+
+	mtlog_add("draw_video_contents: render lock released");
+
+	mtlog_add("draw_video_contents: end");
 }
 
 //============================================================
@@ -697,7 +748,7 @@ void winwindow_process_events(running_machine &machine, int ingame, bool nodispa
 	assert(GetCurrentThreadId() == main_threadid);
 
 	// TODO: Need to handle all the stuff that was in this method as events
-	CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
+	CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
 
 	// Review: Do we need this now?
 	// update the cursor state after processing events

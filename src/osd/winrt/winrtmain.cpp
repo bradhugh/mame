@@ -95,10 +95,6 @@ void App::SetWindow(CoreWindow^ window)
 // Initializes scene resources, or loads a previously saved app state.
 void App::Load(Platform::String^ entryPoint)
 {
-	if (m_main == nullptr)
-	{
-		m_main = std::unique_ptr<MameMain>(new MameMain());
-	}
 }
 
 // This method is called after the window becomes active.
@@ -109,36 +105,14 @@ void App::Run()
 	{
 		winrt_options options;
 		winrt_osd_interface osd(options);
-		// if we're a GUI app, out errors to message boxes
-		// Initialize this after the osd interface so that we are first in the
-		// output order
 
-		/*std::vector<std::unique_ptr<char>> arglist(g_command_args->Length);
-		auto args = std::make_unique<char*[]>(g_command_args->Length);
-		for (int i = 0; i < g_command_args->Length; i++)
-		{
-			Platform::String^ arg = g_command_args->Data[i];
-			unsigned int arglen = arg->Length();
-
-			auto utf8param = std::make_unique<char>(arglen + 1);
-			if (!WideCharToMultiByte(CP_UTF8, 0, arg->Data(), arglen, utf8param.get(), arglen + 1, nullptr, nullptr))
-			{
-				throw new std::exception("WideCharToMultiByte failed!");
-			}
-
-			arglist.push_back(std::move(utf8param));
-			args.get()[i] = arglist.back().get();
-		}*/
-
-		const char * default_exe_path = "C:\\Fake\\WindowsStoreRoot\\Mame.exe";
 		char exe_path[MAX_PATH];
-		char* fake_args[1] = { exe_path };
-
-		strncpy(exe_path, default_exe_path, MAX_PATH);
+		GetModuleFileNameA(NULL, exe_path, MAX_PATH);
+		char* args[2] = { exe_path, (char*)"-verbose" };
 		
 		osd.register_options();
 		cli_frontend frontend(options, osd);
-		result = frontend.execute(1, fake_args);
+		result = frontend.execute(ARRAY_LENGTH(args), args);
 	}
 }
 
@@ -154,7 +128,6 @@ void App::Uninitialize()
 void App::OnActivated(CoreApplicationView^ applicationView, IActivatedEventArgs^ args)
 {
 	// Run() won't start until the CoreWindow is activated.
-	CoreWindow::GetForCurrentThread()->Activate();
 }
 
 void App::OnSuspending(Platform::Object^ sender, SuspendingEventArgs^ args)
@@ -212,66 +185,6 @@ void App::OnOrientationChanged(DisplayInformation^ sender, Object^ args)
 void App::OnDisplayContentsInvalidated(DisplayInformation^ sender, Object^ args)
 {
 }
-
-// Loads and initializes application assets when the application is loaded.
-MameMain::MameMain()
-{
-}
-
-MameMain::~MameMain()
-{
-}
-
-// Updates application state when the window size changes (e.g. device orientation change)
-void MameMain::CreateWindowSizeDependentResources()
-{
-}
-
-// Updates the application state once per frame.
-void MameMain::Update()
-{
-}
-
-// Renders the current frame according to the current application state.
-// Returns true if the frame was rendered and is ready to be displayed.
-bool MameMain::Render()
-{
-	return true;
-}
-
-// Notifies renderers that device resources need to be released.
-void MameMain::OnDeviceLost()
-{
-	/*m_sceneRenderer->ReleaseDeviceDependentResources();
-	m_fpsTextRenderer->ReleaseDeviceDependentResources();*/
-}
-
-// Notifies renderers that device resources may now be recreated.
-void MameMain::OnDeviceRestored()
-{
-	/*m_sceneRenderer->CreateDeviceDependentResources();
-	m_fpsTextRenderer->CreateDeviceDependentResources();
-	CreateWindowSizeDependentResources();*/
-}
-
-//============================================================
-//  CONSTANTS
-//============================================================
-
-// we fake a keyboard with the following keys
-enum
-{
-	KEY_ESCAPE,
-	KEY_P1_START,
-	KEY_BUTTON_1,
-	KEY_BUTTON_2,
-	KEY_BUTTON_3,
-	KEY_JOYSTICK_U,
-	KEY_JOYSTICK_D,
-	KEY_JOYSTICK_L,
-	KEY_JOYSTICK_R,
-	KEY_TOTAL
-};
 
 //**************************************************************************
 //  OPTIONS
