@@ -643,8 +643,12 @@ private:
 class font_dwrite : public osd_module, public font_module
 {
 private:
-	d2d_create_factory_fn			m_pfnD2D1CreateFactory;
-	dwrite_create_factory_fn		m_pfnDWriteCreateFactory;
+
+#if defined (OSD_WINDOWS)
+	d2d_create_factory_fn			D2D1CreateFactory;
+	dwrite_create_factory_fn		DWriteCreateFactory;
+#endif
+
 	ComPtr<ID2D1Factory>		    m_d2dfactory;
 	ComPtr<IDWriteFactory>		    m_dwriteFactory;
 	ComPtr<IWICImagingFactory>	    m_wicFactory;
@@ -653,8 +657,11 @@ public:
 	font_dwrite() :
 		osd_module(OSD_FONT_PROVIDER, "dwrite"),
 		font_module(),
-		m_pfnD2D1CreateFactory("D2D1CreateFactory", L"D2d1.dll"),
-		m_pfnDWriteCreateFactory("DWriteCreateFactory", L"Dwrite.dll"),
+
+#if defined(OSD_WINDOWS)
+		D2D1CreateFactory("D2D1CreateFactory", L"D2d1.dll"),
+		DWriteCreateFactory("DWriteCreateFactory", L"Dwrite.dll"),
+#endif
 		m_d2dfactory(nullptr),
 		m_dwriteFactory(nullptr),
 		m_wicFactory(nullptr)
@@ -663,12 +670,14 @@ public:
 
 	virtual bool probe() override
 	{
+#if defined(OSD_WINDOWS)
 		// This module is available if it can load the expected API Functions
-		if (m_pfnD2D1CreateFactory.initialize() != 0
-			|| m_pfnDWriteCreateFactory.initialize() != 0)
+		if (D2D1CreateFactory.initialize() != 0
+			|| DWriteCreateFactory.initialize() != 0)
 		{
 			return false;
 		}
+#endif
 
 		return true;
 	}
@@ -679,26 +688,32 @@ public:
 
 		osd_printf_verbose("FontProvider: Initializing DirectWrite\n");
 
+#if defined(OSD_WINDOWS)
 		// Make sure we can initialize our api functions
-		if (m_pfnD2D1CreateFactory.initialize()
-			|| m_pfnDWriteCreateFactory.initialize())
+		if (D2D1CreateFactory.initialize()
+			|| DWriteCreateFactory.initialize())
 		{
 			osd_printf_error("ERROR: FontProvider: Failed to load DirectWrite functions.\n");
 			return -1;
 		}
 
+#endif
 		// Create a Direct2D factory.
-		HR_RET1(m_pfnD2D1CreateFactory(
+		HR_RET1(D2D1CreateFactory(
 			D2D1_FACTORY_TYPE_SINGLE_THREADED,
 			__uuidof(ID2D1Factory),
 			nullptr,
 			reinterpret_cast<void**>(this->m_d2dfactory.GetAddressOf())));
 
+#if defined(OSD_WINDOWS)
 		// Initialize COM
-		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+		CoInitializeEx(NULL, COINIT_MULTITHREADED);
+#elif defined(OSD_WINRT)
+		Windows::Foundation::Initialize(RO_INIT_MULTITHREADED);
+#endif
 
 		// Create a DirectWrite factory.
-		HR_RET1(m_pfnDWriteCreateFactory(
+		HR_RET1(DWriteCreateFactory(
 			DWRITE_FACTORY_TYPE_SHARED,
 			__uuidof(IDWriteFactory),
 			reinterpret_cast<IUnknown **>(m_dwriteFactory.GetAddressOf())));
