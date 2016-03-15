@@ -73,20 +73,20 @@ end
 			-- Manifest file
 			MAME_DIR .. "src/osd/winrt/Package.appxmanifest",
 		}
+		configuration "**/Package.appxmanifest"
+			metadata { ["Link"] = "Package.appxmanifest" }
 
-		configuration { "winstore*" }
+	configuration { "winstore*" }
 		files {
 			MAME_DIR .. "src/osd/winrt/Assets/SplashScreen.scale-200.png"
 		}
-		configuration "**/SplashScreen.scale-200.png"
-			metadata {
-				["DeploymentContent"] = "true",
-				["Link"] = "Assets\\SplashScreen.scale-200.png"
-			}
-		
-		-- BGFX Files
+		configuration "**/src/osd/winrt/Assets/SplashScreen.scale-200.png"
+			flags { "ImageDeploymentContent" }
+			metadata { ["Link"] = "Assets\\SplashScreen.scale-200.png" }
+	
+	-- Effects and Shaders
+	configuration { "winstore*" }
 		files {
-			-- Effects
 			MAME_DIR .. "bgfx/effects/blit.json",
 			MAME_DIR .. "bgfx/effects/gui_add.json",
 			MAME_DIR .. "bgfx/effects/blit.json",
@@ -101,8 +101,6 @@ end
 			MAME_DIR .. "bgfx/effects/screen_multiply.json",
 			MAME_DIR .. "bgfx/effects/screen_opaque.json",
 			MAME_DIR .. "bgfx/effects/tint.json",
-			
-			-- Shaders
 			MAME_DIR .. "shaders/dx11/fs_blit.bin",
 			MAME_DIR .. "shaders/dx11/fs_gui.bin",
 			MAME_DIR .. "shaders/dx11/fs_phosphor.bin",
@@ -116,6 +114,8 @@ end
 			MAME_DIR .. "shaders/dx11/vs_screen.bin",
 			MAME_DIR .. "shaders/dx11/vs_tint.bin",
 		}
+		configuration "**/*"
+			flags { "DeploymentContent" }
 
 	configuration { "x64", "Release" }
 		targetsuffix "64"

@@ -139,6 +139,7 @@
 					ATL = 1,
 					DebugEnvsDontMerge = 1,
 					DebugEnvsInherit = 1,
+					DeploymentContent = 1,
 					EnableMinimalRebuild = 1,
 					EnableSSE = 1,
 					EnableSSE2 = 1,
@@ -146,6 +147,7 @@
 					FatalWarnings = 1,
 					FloatFast = 1,
 					FloatStrict = 1,
+					ImageDeploymentContent = 1,
 					Managed = 1,
 					MFC = 1,
 					NativeWChar = 1,
@@ -214,6 +216,12 @@
 		windowstargetplatformversion =
 		{
 			kind  = "string",
+			scope = "project",
+		},
+		
+		windowstargetplatformminversion =
+		{
+			kind = "string",
 			scope = "project",
 		},
 

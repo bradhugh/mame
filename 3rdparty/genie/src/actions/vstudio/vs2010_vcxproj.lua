@@ -28,6 +28,13 @@
 			local windowsTargetPlatformVersion = prj.windowstargetplatformversion or action.vstudio.windowsTargetPlatformVersion
 			if windowsTargetPlatformVersion ~= nil then
 				_p(2,'<WindowsTargetPlatformVersion>%s</WindowsTargetPlatformVersion>',windowsTargetPlatformVersion)
+				
+				--if they set a min version, use that, otherwise make it the same as plat version
+				if prj.windowstargetplatformminversion then
+					_p(2,'<WindowsTargetPlatformMinVersion>%s</WindowsTargetPlatformMinVersion>',prj.windowstargetplatformminversion)
+				else
+					_p(2,'<WindowsTargetPlatformMinVersion>%s</WindowsTargetPlatformMinVersion>',windowsTargetPlatformVersion)
+				end
 			end
 		--if prj.flags is required as it is not set at project level for tests???
 		--vs200x generator seems to swap a config for the prj in test setup
@@ -525,7 +532,8 @@
 				None = {},
 				ResourceCompile = {},
 				AppxManifest = {},
-				Image = {}
+				Image = {},
+				DeploymentContent = {}
 			}
 
 			local foundAppxManifest = false
@@ -541,6 +549,10 @@
 				elseif path.isappxmanifest(file.name) then
 					foundAppxManifest = true
 					table.insert(sortedfiles.AppxManifest, file)
+				elseif file.flags and table.icontains(file.flags, "ImageDeploymentContent") then
+					table.insert(sortedfiles.Image, file)
+				elseif file.flags and table.icontains(file.flags, "DeploymentContent") then
+					table.insert(sortedfiles.DeploymentContent, file)
 				else
 					table.insert(sortedfiles.None, file)
 				end
@@ -582,13 +594,13 @@
 		vc2010.simplefilesgroup(prj, "ResourceCompile")
 		vc2010.simplefilesgroup(prj, "AppxManifest")
 		vc2010.deploymentcontentgroup(prj, "Image")
+		vc2010.deploymentcontentgroup(prj, "DeploymentContent", "None")
 	end
 	
 	function vc2010.doMetadata(fcfg)
 		if fcfg.metadata then
 			for k,v in pairs(fcfg.metadata) do
 				_p(3,'<%s>%s</%s>', k, v[1], k)
-				--printf('<%s>%s</%s>', k, v[1], k)
 			end
 		end
 	end
@@ -666,15 +678,28 @@
 		end
 	end
 
-	function vc2010.deploymentcontentgroup(prj, section)
+	function vc2010.deploymentcontentgroup(prj, section, filetype)
+		if filetype == nil then
+			filetype = section
+		end
+		
 		local files = vc2010.getfilegroup(prj, section)
 		if #files > 0  then
 			_p(1,'<ItemGroup>')
 			for _, file in ipairs(files) do
-				_p(2,'<%s Include=\"%s\">', section, path.translate(file.name, "\\"))
+				_p(2,'<%s Include=\"%s\">', filetype, path.translate(file.name, "\\"))
+				
+				local link = file.vpath
+				if file.metadata and file.metadata.Link then
+					link = file.metadata.Link[1]
+					file.metadata.Link = nil
+				end
+				
 				vc2010.doMetadata(file)
+				
 				_p(3,'<DeploymentContent>true</DeploymentContent>')
-				_p(2,'</%s>', section)
+				_p(3,'<Link>%s</Link>', path.translate(link, "\\"))
+				_p(2,'</%s>', filetype)
 			end
 			_p(1,'</ItemGroup>')
 		end
