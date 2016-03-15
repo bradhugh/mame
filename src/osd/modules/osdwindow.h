@@ -12,10 +12,10 @@
 #include "emu.h"
 #include "ui/ui.h"
 
-#ifdef OSD_SDL
+#if defined(OSD_SDL)
 // standard SDL headers
 #include "sdlinc.h"
-#elif OSD_WINRT
+#elif defined(OSD_WINRT)
 #include <Agile.h>
 #endif
 
