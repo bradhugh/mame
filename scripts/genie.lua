@@ -1285,9 +1285,17 @@ configuration { "winphone8* or winstore8*" }
 	removelinks {
 		"DelayImp",
 		"gdi32",
-		"psapi"
-	}
-	links {
+		"psapi",
+		"user32",
+		"winmm",
+		"advapi32",
+		"shlwapi",
+		"wsock32",
+		"ws2_32",
+		"psapi",
+		"iphlpapi",
+		"shell32",
+		"userenv",
 		"d3d11",
 		"dxgi"
 	}

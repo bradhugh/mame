@@ -176,9 +176,7 @@ project "netlist"
 		MAME_DIR .. "src/lib/netlist/macro/nlm_other.h",		
 }
 
-configuration { "vs*" }
-	if premake.vstudio.iswinrt() then
-		forcedincludes {
-			MAME_DIR .. "src/osd/winrt/winrtcrtcompat.h"
-		}
-	end
+configuration { "winstore*" }
+	forcedincludes {
+		MAME_DIR .. "src/osd/winrt/winrtcrtcompat.h"
+	}

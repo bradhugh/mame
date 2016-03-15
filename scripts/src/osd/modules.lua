@@ -362,6 +362,7 @@ function osdmodulestargetconf()
 	end
 
 	if _OPTIONS["targetos"]=="windows" then
+	configuration { "not winstore*" }
 		links {
 			"gdi32",
 			"dsound",

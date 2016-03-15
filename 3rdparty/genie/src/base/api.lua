@@ -358,6 +358,12 @@
 				return nil, "invalid message to skip"
 			end,
 		},
+		
+		metadata =
+		{
+			kind = "keyvalue",
+			scope = "config"
+		},
 
 		msgarchiving =
 		{

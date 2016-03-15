@@ -169,11 +169,10 @@ if _OPTIONS["vs"]=="intel-15" then
 		}
 end
 
-	if premake.vstudio.iswinrt() then
+	configuration { "winstore*" }
 		defines {
 			"NO_GETENV"
 		}
-	end
 
 	configuration { }
 
@@ -406,13 +405,11 @@ if _OPTIONS["vs"]=="intel-15" then
 		}
 end
 
-	if premake.vstudio.iswinrt() then
-
+	configuration { "winstore*" }
 		forcedincludes {
 			MAME_DIR .. "src/osd/winrt/winrtcrtcompat.h",
 			MAME_DIR .. "src/osd/winrt/winrtcompat.h",
 		}
-	end
 
 	configuration { }
 		defines {
@@ -508,12 +505,6 @@ project "lualibs"
 		MAME_DIR .. "3rdparty",
 	}
 
-	if premake.vstudio.iswinrt() then
-		forcedincludes {
-			MAME_DIR .. "src/osd/winrt/winrtcompat.h"
-		}
-	end
-
 	if _OPTIONS["with-bundled-lua"] then
 		includedirs {
 			MAME_DIR .. "3rdparty/lua/src",
@@ -523,7 +514,14 @@ project "lualibs"
 		includedirs {
 			MAME_DIR .. "3rdparty/zlib",
 		}
-	end	
+	end
+	
+	configuration { "winstore*" }
+		forcedincludes {
+			MAME_DIR .. "src/osd/winrt/winrtcompat.h"
+		}
+	
+	configuration {}
 
 	files {
 		MAME_DIR .. "3rdparty/lsqlite3/lsqlite3.c",
@@ -554,12 +552,10 @@ if _OPTIONS["vs"]=="intel-15" then
 			"/Qwd2557", 			-- remark #2557: comparison between signed and unsigned operands
 		}
 end
-
-	if premake.vstudio.iswinrt() then
+	configuration { "winstore*" }
 		defines {
 			"SQLITE_OS_WINRT=1"
 		}
-	end
 	configuration { "pnacl" }
 		defines {
 			"SQLITE_OMIT_LOAD_EXTENSION",
@@ -568,7 +564,6 @@ end
 		buildoptions {
 			"/wd4456", -- warning C4456: declaration of 'xxx' hides previous local declaration
 		}
-
 
 	configuration { "gmake" }
 		buildoptions_c {
@@ -846,12 +841,12 @@ if _OPTIONS["vs"]=="intel-15" then
 			"/Qwd1879", 			-- warning #1879: unimplemented pragma ignored
 		}
 end
-	if premake.vstudio.iswinrt() then
+	configuration { "winstore*" }
 		defines {
 			"_WIN32_WCE", -- define the WIN CE flavor when compiling for WINRT
 			"UNDER_CE"
 		}
-	end
+
 	configuration { "vs2015" }
 		buildoptions {
 			"/wd4456", -- warning C4456: declaration of 'xxx' hides previous local declaration
@@ -895,11 +890,10 @@ end
 			"/wd4701", -- warning C4701: potentially uninitialized local variable 'xxx' used
 		}
 		
-		if premake.vstudio.iswinrt() then
-			forcedincludes {
-				MAME_DIR .. "src/osd/winrt/winrtcompat.h"
-			}
-		end
+	configuration { "winstore*" }
+		forcedincludes {
+			MAME_DIR .. "src/osd/winrt/winrtcompat.h"
+		}
 
 	configuration { }
 
@@ -1047,27 +1041,30 @@ project "uv"
 			MAME_DIR .. "3rdparty/libuv/src/uv-common.c",
 			MAME_DIR .. "3rdparty/libuv/src/version.c",
 	}
+	
+	configuration { "winstore*" }
+		defines {
+			"_WIN32_WINNT=0x0602",
+		}
+
+	configuration { }
 
 	if _OPTIONS["targetos"]=="windows" then
 		defines {
 			"WIN32_LEAN_AND_MEAN",
 		}
 		
-		if premake.vstudio.iswinrt() then
-			defines {
-				"_WIN32_WINNT=0x0602",
-			}
-		else
-			defines {
-				"_WIN32_WINNT=0x0502",
-			}
-		end
-		
         if _ACTION == "vs2013" then
 			files {
 				MAME_DIR .. "3rdparty/libuv/src/win/snprintf.c",
 			}
 		end
+		
+		configuration { "not winstore*"}
+			defines {
+				"_WIN32_WINNT=0x0502",
+			}
+		
 		configuration { }
 		files {
 			MAME_DIR .. "3rdparty/libuv/src/win/async.c",

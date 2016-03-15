@@ -538,14 +538,11 @@
 					end
 				elseif path.isresourcefile(file.name) then
 					table.insert(sortedfiles.ResourceCompile, file)
+				elseif path.isappxmanifest(file.name) then
+					foundAppxManifest = true
+					table.insert(sortedfiles.AppxManifest, file)
 				else
-					local ext = path.getextension(file.name):lower()
-					if ext == ".appxmanifest" then
-						foundAppxManifest = true
-						table.insert(sortedfiles.AppxManifest, file)
-					else
-						table.insert(sortedfiles.None, file)
-					end
+					table.insert(sortedfiles.None, file)
 				end
 			end
 
@@ -585,6 +582,15 @@
 		vc2010.simplefilesgroup(prj, "ResourceCompile")
 		vc2010.simplefilesgroup(prj, "AppxManifest")
 		vc2010.deploymentcontentgroup(prj, "Image")
+	end
+	
+	function vc2010.doMetadata(fcfg)
+		if fcfg.metadata then
+			for k,v in pairs(fcfg.metadata) do
+				_p(3,'<%s>%s</%s>', k, v[1], k)
+				--printf('<%s>%s</%s>', k, v[1], k)
+			end
+		end
 	end
 
 	function vc2010.customtaskgroup(prj)
@@ -643,9 +649,14 @@
 		if #files > 0  then
 			_p(1,'<ItemGroup>')
 			for _, file in ipairs(files) do
-				if subtype then
+				if subtype or file.metadata then
 					_p(2,'<%s Include=\"%s\">', section, path.translate(file.name, "\\"))
-					_p(3,'<SubType>%s</SubType>', subtype)
+					
+					if subtype then
+						_p(3,'<SubType>%s</SubType>', subtype)
+					end
+					
+					vc2010.doMetadata(file)
 					_p(2,'</%s>', section)
 				else
 					_p(2,'<%s Include=\"%s\" />', section, path.translate(file.name, "\\"))
@@ -661,6 +672,7 @@
 			_p(1,'<ItemGroup>')
 			for _, file in ipairs(files) do
 				_p(2,'<%s Include=\"%s\">', section, path.translate(file.name, "\\"))
+				vc2010.doMetadata(file)
 				_p(3,'<DeploymentContent>true</DeploymentContent>')
 				_p(2,'</%s>', section)
 			end
@@ -689,7 +701,7 @@
 					)
 				
 				--For Windows Store Builds, if the file is .c we have to exclude it from /ZW compilation
-				if vstudio.iswinrt() and string.len(file.name) > 2 and string.sub(file.name, -2) == ".c" then
+				if vstudio.iswinrt() and path.iscfile(file.name) then
 					_p(3,'<CompileAsWinRT>FALSE</CompileAsWinRT>')
 				end
 				
