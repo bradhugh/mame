@@ -9,7 +9,7 @@
 #include "input_module.h"
 #include "modules/osdmodule.h"
 
-#if defined(OSD_WINDOWS)
+#if defined(OSD_WINDOWS) || defined(OSD_WINRT)
 
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
@@ -117,6 +117,8 @@ struct xinput_api_state
 	XINPUT_CAPABILITIES     caps;
 };
 
+#if defined(OSD_WINDOWS)
+
 // Typedef for pointers to XInput Functions
 typedef lazy_loaded_function_p2<DWORD, DWORD, XINPUT_STATE*> xinput_get_state_fn;
 typedef lazy_loaded_function_p3<DWORD, DWORD, DWORD, XINPUT_CAPABILITIES*> xinput_get_caps_fn;
@@ -171,6 +173,13 @@ public:
 	}
 };
 
+#define XInputGetState xinput_api->XInputGetState
+#define XInputGetCapabilities xinput_api->XInputGetCapabilities
+
+#elif defined (OSD_WINRT)
+
+#endif
+
 //============================================================
 //  xinput_joystick_device
 //============================================================
@@ -181,28 +190,36 @@ public:
 	gamepad_state      gamepad;
 	xinput_api_state   xinput_state;
 
+#ifdef OSD_WINDOWS
 private:
 	xinput_interface*  xinput_api;
+#endif
 
 public:
 	xinput_joystick_device(running_machine &machine, const char *name, input_module &module)
-		: device_info(machine, name, DEVICE_CLASS_JOYSTICK, module),
-			gamepad({0}),
-			xinput_state({0}),
-			xinput_api(nullptr)
+		: device_info(machine, name, DEVICE_CLASS_JOYSTICK, module)
+		, gamepad({0})
+		, xinput_state({0})
+#ifdef OSD_WINDOWS
+		, xinput_api(nullptr)
 	{
 		// Attempt to get the xinput interface
 		xinput_interface::get_interface(&xinput_api);
+#else
+	{
+#endif
 	}
 
 	void poll() override
 	{
+#ifdef OSD_WINDOWS
 		// Nothing we can do if for some reason the API couldn't be loaded
 		if (xinput_api == nullptr)
 			return;
+#endif
 
 		// poll the device first
-		HRESULT result = xinput_api->XInputGetState(xinput_state.playerIndex, &xinput_state.xstate);
+		HRESULT result = XInputGetState(xinput_state.playerIndex, &xinput_state.xstate);
 
 		// If we can't poll the device, skip
 		if (FAILED(result))
@@ -248,13 +265,17 @@ public:
 
 class xinput_joystick_module : public wininput_module
 {
+#if defined(OSD_WINDOWS)
 private:
 	xinput_interface* xinput_api;
+#endif
 
 public:
 	xinput_joystick_module()
-		: wininput_module(OSD_JOYSTICKINPUT_PROVIDER, "xinput"),
-			xinput_api(nullptr)
+		: wininput_module(OSD_JOYSTICKINPUT_PROVIDER, "xinput")
+#if defined(OSD_WINDOWS)
+		, xinput_api(nullptr)
+#endif
 	{
 	}
 
@@ -265,6 +286,7 @@ public:
 		if (status != 0)
 			return status;
 
+#if defined(OSD_WINDOWS)
 		// Make sure we can get the xinput API
 		status = xinput_interface::get_interface(&xinput_api);
 		if (status != 0)
@@ -272,6 +294,7 @@ public:
 			osd_printf_error("xinput_joystick_module failed to get XInput interface! Error: %u\n", (unsigned int)status);
 			return -1;
 		}
+#endif
 
 		return 0;
 	}
@@ -279,9 +302,6 @@ public:
 protected:
 	virtual void input_init(running_machine &machine) override
 	{
-		// The Xinput API should have been obtained already
-		assert(xinput_api != nullptr);
-
 		xinput_joystick_device *devinfo;
 
 		// Loop through each gamepad to determine if they are connected
@@ -289,7 +309,7 @@ protected:
 		{
 			XINPUT_STATE state = {0};
 
-			if (xinput_api->XInputGetState(i, &state) == ERROR_SUCCESS)
+			if (XInputGetState(i, &state) == ERROR_SUCCESS)
 			{
 				// allocate and link in a new device
 				devinfo = create_xinput_device(machine, i);
@@ -352,7 +372,7 @@ protected:
 			xinput_joystick_device *devinfo;
 
 			XINPUT_CAPABILITIES caps = {0};
-			if (FAILED(xinput_api->XInputGetCapabilities(index, 0, &caps)))
+			if (FAILED(XInputGetCapabilities(index, 0, &caps)))
 			{
 				// If we can't get the capabilities skip this device
 				return nullptr;

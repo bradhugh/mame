@@ -43,8 +43,12 @@ public:
 
 	virtual bool should_hide_mouse()
 	{
+#if defined(OSD_WINDOWS)
 		if (winwindow_has_focus()  // has focus
 			&& (!video_config.windowed || !win_window_list->win_has_menu()) // not windowed or doesn't have a menu
+#else
+		if (true
+#endif
 			&& (input_enabled() && !input_paused()) // input enabled and not paused
 			&& (mouse_enabled() || lightgun_enabled())) // either mouse or lightgun enabled in the core
 		{
@@ -65,12 +69,24 @@ protected:
 	{
 		// periodically process events, in case they're not coming through
 		// this also will make sure the mouse state is up-to-date
+#if defined(OSD_WINDOWS)
 		winwindow_process_events_periodic(machine);
+#elif defined(OSD_WINRT)
+		{
+			using namespace Windows::UI::Core;
+			CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
+		}
+#endif
 	}
 
 	bool should_poll_devices(running_machine &machine) override
 	{
-		return input_enabled() && (m_global_inputs_enabled || winwindow_has_focus());
+		return input_enabled() && (m_global_inputs_enabled ||
+#if defined (OSD_WINDOWS)
+			winwindow_has_focus());
+#else
+			true);
+#endif
 	}
 };
 
