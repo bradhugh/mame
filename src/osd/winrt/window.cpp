@@ -53,55 +53,6 @@ static HANDLE window_thread_ready_event;
 void mtlog_add(const char *event) { }
 static void mtlog_dump(void) { }
 
-winrt_window_info::winrt_window_info(running_machine &machine)
-	: osd_window(), m_next(nullptr),
-	m_init_state(0),
-	m_monitor(nullptr),
-	m_target(nullptr),
-	m_targetview(0),
-	m_targetorient(0),
-	m_lastclicktime(0),
-	m_lastclickx(0),
-	m_lastclicky(0),
-	m_renderer(nullptr),
-	m_machine(machine)
-{
-	m_prescale = video_config.prescale;
-}
-
-winrt_window_info::~winrt_window_info()
-{
-	if (m_renderer != nullptr)
-	{
-		delete m_renderer;
-	}
-}
-
-//============================================================
-//  wnd_extra_width
-//  (window thread)
-//============================================================
-
-int winrt_window_info::wnd_extra_width()
-{
-	RECT temprect = { 100, 100, 200, 200 };
-	//AdjustWindowRectEx(&temprect, WINDOW_STYLE, win_has_menu(), WINDOW_STYLE_EX);
-	return rect_width(&temprect) - 100;
-}
-
-
-
-//============================================================
-//  wnd_extra_height
-//  (window thread)
-//============================================================
-
-int winrt_window_info::wnd_extra_height()
-{
-	RECT temprect = { 100, 100, 200, 200 };
-	//AdjustWindowRectEx(&temprect, WINDOW_STYLE, win_has_menu(), WINDOW_STYLE_EX);
-	return rect_height(&temprect) - 100;
-}
 
 //============================================================
 //  window_init
@@ -164,6 +115,42 @@ bool winrt_osd_interface::window_init()
 	return true;
 }
 
+void winrt_osd_interface::update_slider_list()
+{
+	for (winrt_window_info *window = win_window_list; window != nullptr; window = window->m_next)
+	{
+		if (window->m_renderer && window->m_renderer->sliders_dirty())
+		{
+			build_slider_list();
+			return;
+		}
+	}
+}
+
+void winrt_osd_interface::build_slider_list()
+{
+	m_sliders = nullptr;
+	slider_state *curr = m_sliders;
+	for (winrt_window_info *info = win_window_list; info != nullptr; info = info->m_next)
+	{
+		slider_state *window_sliders = info->m_renderer->get_slider_list();
+		if (window_sliders != nullptr)
+		{
+			if (m_sliders == nullptr)
+			{
+				m_sliders = curr = window_sliders;
+			}
+			else
+			{
+				while (curr->next != nullptr)
+				{
+					curr = curr->next;
+				}
+				curr->next = window_sliders;
+			}
+		}
+	}
+}
 //============================================================
 //  winwindow_exit
 //  (main thread)
@@ -201,120 +188,48 @@ void winrt_osd_interface::window_exit()
 		CloseHandle(window_thread_ready_event);
 }
 
+winrt_window_info::winrt_window_info(running_machine &machine)
+	: osd_window(), m_next(nullptr),
+	m_init_state(0),
+	m_monitor(nullptr),
+	m_target(nullptr),
+	m_targetview(0),
+	m_targetorient(0),
+	m_lastclicktime(0),
+	m_lastclickx(0),
+	m_lastclicky(0),
+	m_renderer(nullptr),
+	m_machine(machine)
+{
+	m_prescale = video_config.prescale;
+}
+
+winrt_window_info::~winrt_window_info()
+{
+	if (m_renderer != nullptr)
+	{
+		delete m_renderer;
+	}
+}
+
+
 //============================================================
-//  winrt_window_info::update
+//  winwindow_process_events
 //  (main thread)
 //============================================================
 
-void winrt_window_info::update()
+void winwindow_process_events(running_machine &machine, int ingame, bool nodispatch)
 {
-	int targetview, targetorient;
-	render_layer_config targetlayerconfig;
-
 	assert(GetCurrentThreadId() == main_threadid);
 
-	// see if the target has changed significantly in window mode
-	targetview = m_target->view();
-	targetorient = m_target->orientation();
-	targetlayerconfig = m_target->layer_config();
-	if (targetview != m_targetview || targetorient != m_targetorient || targetlayerconfig != m_targetlayerconfig)
-	{
-		m_targetview = targetview;
-		m_targetorient = targetorient;
-		m_targetlayerconfig = targetlayerconfig;
+	// TODO: Need to handle all the stuff that was in this method as events
+	CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
 
-		// in window mode, reminimize/maximize
-		/*if (m_isminimized)
-			SendMessage(m_hwnd, WM_USER_SET_MINSIZE, 0, 0);
-
-		if (m_ismaximized)
-			SendMessage(m_hwnd, WM_USER_SET_MAXSIZE, 0, 0);
-		}*/
-	}
-
-	// if we're visible and running and not in the middle of a resize, draw
-	if (m_window != nullptr && m_target != nullptr && m_renderer != nullptr)
-	{
-		bool got_lock = true;
-
-		//mtlog_add("winwindow_video_window_update: try lock");
-
-		// only block if we're throttled
-		if (machine().video().throttled() || osd_ticks() - last_update_time > 250)
-			m_render_lock.lock();
-		else
-			got_lock = m_render_lock.try_lock();
-
-		// only render if we were able to get the lock
-		if (got_lock)
-		{
-			render_primitive_list *primlist;
-
-			//mtlog_add("winwindow_video_window_update: got lock");
-
-			// don't hold the lock; we just used it to see if rendering was still happening
-			m_render_lock.unlock();
-
-			// ensure the target bounds are up-to-date, and then get the primitives
-			primlist = m_renderer->get_primitives();
-
-			// post a redraw request with the primitive list as a parameter
-			last_update_time = osd_ticks();
-
-			// mtlog_add("winwindow_video_window_proc: WM_USER_REDRAW begin");
-
-			// For now assume only one window
-			winrt_window_info *window = win_window_list;
-
-			// Previously this was being done as a message
-			window->m_primlist = primlist;
-			window->draw_video_contents(FALSE);
-		}
-	}
-
-	//mtlog_add("winwindow_video_window_update: end");
+	// Review: Do we need this now?
+	// update the cursor state after processing events
+	// winwindow_update_cursor_state(machine);
 }
 
-//============================================================
-//  draw_video_contents
-//  (window thread)
-//============================================================
-
-void winrt_window_info::draw_video_contents(int update)
-{
-	assert(GetCurrentThreadId() == window_threadid);
-
-	//mtlog_add("draw_video_contents: begin");
-
-	//mtlog_add("draw_video_contents: render lock acquire");
-	std::lock_guard<std::mutex> lock(m_render_lock);
-	//mtlog_add("draw_video_contents: render lock acquired");
-
-	// if we're not visible, don't bother
-	if (m_window != nullptr && m_window->Visible)
-	{
-		// if no bitmap, just fill
-		if (m_primlist == nullptr)
-		{
-			// If needed I can use D3d directly from here to do this
-			// However it seems better if I don't
-			/*RECT fill;
-			GetClientRect(m_hwnd, &fill);
-			FillRect(dc, &fill, (HBRUSH)GetStockObject(BLACK_BRUSH));*/
-		}
-
-		// otherwise, render with our drawing system
-		else
-		{
-			m_renderer->draw(update);
-			mtlog_add("draw_video_contents: drawing finished");
-		}
-	}
-
-	mtlog_add("draw_video_contents: render lock released");
-
-	mtlog_add("draw_video_contents: end");
-}
 
 //============================================================
 //  winwindow_video_window_create
@@ -406,6 +321,108 @@ void winrt_window_info::destroy()
 }
 
 //============================================================
+//  winrt_window_info::update
+//  (main thread)
+//============================================================
+
+void winrt_window_info::update()
+{
+	int targetview, targetorient;
+	render_layer_config targetlayerconfig;
+
+	assert(GetCurrentThreadId() == main_threadid);
+
+	// see if the target has changed significantly in window mode
+	targetview = m_target->view();
+	targetorient = m_target->orientation();
+	targetlayerconfig = m_target->layer_config();
+	if (targetview != m_targetview || targetorient != m_targetorient || targetlayerconfig != m_targetlayerconfig)
+	{
+		m_targetview = targetview;
+		m_targetorient = targetorient;
+		m_targetlayerconfig = targetlayerconfig;
+
+		// in window mode, reminimize/maximize
+		/*if (m_isminimized)
+			SendMessage(m_hwnd, WM_USER_SET_MINSIZE, 0, 0);
+
+		if (m_ismaximized)
+			SendMessage(m_hwnd, WM_USER_SET_MAXSIZE, 0, 0);
+		}*/
+	}
+
+	// if we're visible and running and not in the middle of a resize, draw
+	if (m_window != nullptr && m_target != nullptr && m_renderer != nullptr)
+	{
+		bool got_lock = true;
+
+		//mtlog_add("winwindow_video_window_update: try lock");
+
+		// only block if we're throttled
+		if (machine().video().throttled() || osd_ticks() - last_update_time > 250)
+			m_render_lock.lock();
+		else
+			got_lock = m_render_lock.try_lock();
+
+		// only render if we were able to get the lock
+		if (got_lock)
+		{
+			render_primitive_list *primlist;
+
+			//mtlog_add("winwindow_video_window_update: got lock");
+
+			// don't hold the lock; we just used it to see if rendering was still happening
+			m_render_lock.unlock();
+
+			// ensure the target bounds are up-to-date, and then get the primitives
+			primlist = m_renderer->get_primitives();
+
+			// post a redraw request with the primitive list as a parameter
+			last_update_time = osd_ticks();
+
+			// mtlog_add("winwindow_video_window_proc: WM_USER_REDRAW begin");
+
+			// For now assume only one window
+			winrt_window_info *window = win_window_list;
+
+			// Previously this was being done as a message
+			window->m_primlist = primlist;
+			window->draw_video_contents(FALSE);
+		}
+	}
+
+	//mtlog_add("winwindow_video_window_update: end");
+}
+
+//============================================================
+//  winwindow_video_window_monitor
+//  (window thread)
+//============================================================
+
+osd_monitor_info *winrt_window_info::winwindow_video_window_monitor(const osd_rect *proposed)
+{
+	osd_monitor_info *monitor;
+
+	// in window mode, find the nearest
+	if (proposed != nullptr)
+	{
+		RECT p;
+		p.top = proposed->top();
+		p.left = proposed->left();
+		p.bottom = proposed->bottom();
+		p.right = proposed->right();
+		//monitor = winrt_monitor_info::monitor_from_handle(MonitorFromRect(&p, MONITOR_DEFAULTTONEAREST));
+		monitor = m_monitor;
+	}
+	else
+		monitor = m_monitor;
+		//monitor = winrt_monitor_info::monitor_from_handle(MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST));
+
+	// make sure we're up-to-date
+	//monitor->refresh();
+	return monitor;
+}
+//============================================================
 //  set_starting_view
 //  (main thread)
 //============================================================
@@ -425,6 +442,32 @@ void winrt_window_info::set_starting_view(int index, const char *defview, const 
 
 	// set the view
 	target()->set_view(viewindex);
+}
+
+//============================================================
+//  wnd_extra_width
+//  (window thread)
+//============================================================
+
+int winrt_window_info::wnd_extra_width()
+{
+	RECT temprect = { 100, 100, 200, 200 };
+	//AdjustWindowRectEx(&temprect, WINDOW_STYLE, win_has_menu(), WINDOW_STYLE_EX);
+	return rect_width(&temprect) - 100;
+}
+
+
+
+//============================================================
+//  wnd_extra_height
+//  (window thread)
+//============================================================
+
+int winrt_window_info::wnd_extra_height()
+{
+	RECT temprect = { 100, 100, 200, 200 };
+	//AdjustWindowRectEx(&temprect, WINDOW_STYLE, win_has_menu(), WINDOW_STYLE_EX);
+	return rect_height(&temprect) - 100;
 }
 
 //============================================================
@@ -501,76 +544,46 @@ int winrt_window_info::complete_create()
 	return 0;
 }
 
+
 //============================================================
-//  adjust_window_position_after_major_change
+//  draw_video_contents
 //  (window thread)
 //============================================================
 
-void winrt_window_info::adjust_window_position_after_major_change()
+void winrt_window_info::draw_video_contents(int update)
 {
-	RECT oldrect;
-
 	assert(GetCurrentThreadId() == window_threadid);
 
-	Windows::Foundation::Rect bounds = m_window->Bounds;
-	oldrect.top = bounds.Top;
-	oldrect.bottom = bounds.Bottom;
-	oldrect.left = bounds.Left;
-	oldrect.right = bounds.Right;
+	//mtlog_add("draw_video_contents: begin");
 
-	// get the current size
-	osd_rect newrect = RECT_to_osd_rect(oldrect);
+	//mtlog_add("draw_video_contents: render lock acquire");
+	std::lock_guard<std::mutex> lock(m_render_lock);
+	//mtlog_add("draw_video_contents: render lock acquired");
 
-	// adjust the window size so the client area is what we want
-	
-	// constrain the existing size to the aspect ratio
-	if (video_config.keepaspect)
-		newrect = constrain_to_aspect_ratio(newrect, WMSZ_BOTTOMRIGHT);
-
-	// adjust the position if different
-	if (oldrect.left != newrect.left() || oldrect.top != newrect.top() ||
-		oldrect.right != newrect.right() || oldrect.bottom != newrect.bottom())
-
-		/*SetWindowPos(m_hwnd, m_fullscreen ? HWND_TOPMOST : HWND_TOP,
-			newrect.left(), newrect.top(),
-			newrect.width(), newrect.height(), 0);*/
-
-	// take note of physical window size (used for lightgun coordinate calculation)
-	if (this == win_window_list)
+	// if we're not visible, don't bother
+	if (m_window != nullptr && m_window->Visible)
 	{
-		win_physical_width = newrect.width();
-		win_physical_height = newrect.height();
-		osd_printf_verbose("Physical width %d, height %d\n", win_physical_width, win_physical_height);
+		// if no bitmap, just fill
+		if (m_primlist == nullptr)
+		{
+			// If needed I can use D3d directly from here to do this
+			// However it seems better if I don't
+			/*RECT fill;
+			GetClientRect(m_hwnd, &fill);
+			FillRect(dc, &fill, (HBRUSH)GetStockObject(BLACK_BRUSH));*/
+		}
+
+		// otherwise, render with our drawing system
+		else
+		{
+			m_renderer->draw(update);
+			mtlog_add("draw_video_contents: drawing finished");
+		}
 	}
-}
 
-//============================================================
-//  winwindow_video_window_monitor
-//  (window thread)
-//============================================================
+	mtlog_add("draw_video_contents: render lock released");
 
-osd_monitor_info *winrt_window_info::winwindow_video_window_monitor(const osd_rect *proposed)
-{
-	osd_monitor_info *monitor;
-
-	// in window mode, find the nearest
-	if (proposed != nullptr)
-	{
-		RECT p;
-		p.top = proposed->top();
-		p.left = proposed->left();
-		p.bottom = proposed->bottom();
-		p.right = proposed->right();
-		//monitor = winrt_monitor_info::monitor_from_handle(MonitorFromRect(&p, MONITOR_DEFAULTTONEAREST));
-		monitor = m_monitor;
-	}
-	else
-		monitor = m_monitor;
-		//monitor = winrt_monitor_info::monitor_from_handle(MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST));
-
-	// make sure we're up-to-date
-	//monitor->refresh();
-	return monitor;
+	mtlog_add("draw_video_contents: end");
 }
 
 static inline int better_mode(int width0, int height0, int width1, int height1, float desired_aspect)
@@ -738,56 +751,46 @@ osd_rect winrt_window_info::constrain_to_aspect_ratio(const osd_rect &rect, int 
 	return ret;
 }
 
+
 //============================================================
-//  winwindow_process_events
-//  (main thread)
+//  adjust_window_position_after_major_change
+//  (window thread)
 //============================================================
 
-void winwindow_process_events(running_machine &machine, int ingame, bool nodispatch)
+void winrt_window_info::adjust_window_position_after_major_change()
 {
-	assert(GetCurrentThreadId() == main_threadid);
+	RECT oldrect;
 
-	// TODO: Need to handle all the stuff that was in this method as events
-	CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
+	assert(GetCurrentThreadId() == window_threadid);
 
-	// Review: Do we need this now?
-	// update the cursor state after processing events
-	// winwindow_update_cursor_state(machine);
-}
+	Windows::Foundation::Rect bounds = m_window->Bounds;
+	oldrect.top = bounds.Top;
+	oldrect.bottom = bounds.Bottom;
+	oldrect.left = bounds.Left;
+	oldrect.right = bounds.Right;
 
-void winrt_osd_interface::update_slider_list()
-{
-	for (winrt_window_info *window = win_window_list; window != nullptr; window = window->m_next)
+	// get the current size
+	osd_rect newrect = RECT_to_osd_rect(oldrect);
+
+	// adjust the window size so the client area is what we want
+	
+	// constrain the existing size to the aspect ratio
+	if (video_config.keepaspect)
+		newrect = constrain_to_aspect_ratio(newrect, WMSZ_BOTTOMRIGHT);
+
+	// adjust the position if different
+	if (oldrect.left != newrect.left() || oldrect.top != newrect.top() ||
+		oldrect.right != newrect.right() || oldrect.bottom != newrect.bottom())
+
+		/*SetWindowPos(m_hwnd, m_fullscreen ? HWND_TOPMOST : HWND_TOP,
+			newrect.left(), newrect.top(),
+			newrect.width(), newrect.height(), 0);*/
+
+	// take note of physical window size (used for lightgun coordinate calculation)
+	if (this == win_window_list)
 	{
-		if (window->m_renderer && window->m_renderer->sliders_dirty())
-		{
-			build_slider_list();
-			return;
-		}
-	}
-}
-
-void winrt_osd_interface::build_slider_list()
-{
-	m_sliders = nullptr;
-	slider_state *curr = m_sliders;
-	for (winrt_window_info *info = win_window_list; info != nullptr; info = info->m_next)
-	{
-		slider_state *window_sliders = info->m_renderer->get_slider_list();
-		if (window_sliders != nullptr)
-		{
-			if (m_sliders == nullptr)
-			{
-				m_sliders = curr = window_sliders;
-			}
-			else
-			{
-				while (curr->next != nullptr)
-				{
-					curr = curr->next;
-				}
-				curr->next = window_sliders;
-			}
-		}
+		win_physical_width = newrect.width();
+		win_physical_height = newrect.height();
+		osd_printf_verbose("Physical width %d, height %d\n", win_physical_width, win_physical_height);
 	}
 }
