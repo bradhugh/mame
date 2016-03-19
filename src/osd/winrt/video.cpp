@@ -9,7 +9,7 @@
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <dxgi.h>
+#include <dxgi1_2.h>
 #include <wrl\client.h>
 #undef interface
 
@@ -157,11 +157,11 @@ static void init_monitors(void)
 	tailptr = &osd_monitor_info::list;
 
 	ComPtr<IDXGIDevice> dxgiDevice;
-	ComPtr<IDXGIFactory1> factory;
+	ComPtr<IDXGIFactory2> factory;
 	ComPtr<IDXGIAdapter> adapter;
 
 	// TODO: Check return
-	CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(factory.GetAddressOf()));
+	CreateDXGIFactory1(__uuidof(IDXGIFactory2), reinterpret_cast<void**>(factory.GetAddressOf()));
 
 	UINT iAdapter = 0;
 	while (!factory->EnumAdapters(iAdapter, adapter.ReleaseAndGetAddressOf()))
