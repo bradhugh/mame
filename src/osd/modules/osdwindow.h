@@ -17,6 +17,9 @@
 // standard windows headers
 #ifdef OSD_WINDOWS
 #define WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #include <windowsx.h>
 #include <mmsystem.h>
@@ -26,8 +29,6 @@
 // forward declaration
 struct SDL_Window;
 #endif
-#undef min
-#undef max
 
 //============================================================
 //  TYPE DEFINITIONS

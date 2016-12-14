@@ -6,9 +6,11 @@
 //
 //============================================================
 
-// standard windows headers
 #include <exception>
+
+// standard windows headers
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 #include <dxgi1_2.h>
 #include <wrl\client.h>

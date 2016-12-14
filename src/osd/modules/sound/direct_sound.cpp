@@ -13,6 +13,9 @@
 
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #include <mmsystem.h>
 
@@ -20,8 +23,6 @@
 #undef WINNT
 #include <dsound.h>
 #undef interface
-#undef min
-#undef max
 
 // MAME headers
 #include "emu.h"

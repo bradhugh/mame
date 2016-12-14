@@ -8,6 +8,9 @@
 #if defined(SDLMAME_WIN32) || defined(OSD_WINDOWS) || defined(OSD_UWP)
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #if defined(SDLMAME_WIN32)
 #include <SDL2/SDL_syswm.h>

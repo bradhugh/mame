@@ -23,6 +23,8 @@
 #include <cstring>
 
 // standard windows headers
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 #include <winioctl.h>
 #include <tchar.h>

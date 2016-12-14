@@ -12,6 +12,9 @@
 
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
@@ -22,8 +25,6 @@
 
 #include <memory>
 #include <vector>
-#undef min
-#undef max
 #include <utility>
 
 #include "modules/lib/osdlib.h"
