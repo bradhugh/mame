@@ -79,7 +79,7 @@ public:
 	software_part *next() const { return m_next; }
 	software_info &info() const { return m_info; }
 	const std::string &name() const { return m_name; }
-	const std::string &interface() const { return m_interface; }
+	const std::string &get_interface() const { return m_interface; }
 	const std::list<feature_list_item> &featurelist() const { return m_featurelist; }
 	const std::vector<rom_entry> &romdata() const { return m_romdata; }
 

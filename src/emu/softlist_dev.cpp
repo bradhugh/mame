@@ -514,7 +514,7 @@ void software_list_device::internal_validity_check(validity_checker &valid)
 		softlist_map part_names;
 		for (const software_part &part : swinfo.parts())
 		{
-			if (part.interface().empty())
+			if (part.get_interface().empty())
 				osd_printf_error("%s: %s has a part (%s) without interface\n", filename(), shortname.c_str(), part.name().c_str());
 
 			if (part.romdata().empty())

@@ -181,7 +181,7 @@
 
 	// add memory maps if present
 	device_memory_interface *memory;
-	if (device->interface(memory))
+	if (device->get_interface(memory))
 	{
 		NSBox *memoryBox = nil;
 		for (address_spacenum i = AS_0; i < ADDRESS_SPACES; i++)

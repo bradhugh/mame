@@ -476,14 +476,14 @@ WRITE8_MEMBER( buggyboy_sound_device::ym2_b_w )
 
 	/* Rear left speaker */
 	device_sound_interface *sound;
-	ym1->interface(sound);
+	ym1->get_interface(sound);
 	gain = data & 0x80 ? 1.0 : 2.0;
 	sound->set_output_gain(0, gain);
 	sound->set_output_gain(1, gain);
 	sound->set_output_gain(2, gain);
 
 	/* Rear right speaker */
-	ym2->interface(sound);
+	ym2->get_interface(sound);
 	gain = data & 0x40 ? 1.0 : 2.0;
 	sound->set_output_gain(0, gain);
 	sound->set_output_gain(1, gain);

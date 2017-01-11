@@ -223,8 +223,8 @@ public:
 	// interface helpers
 	interface_list &interfaces() { return m_interfaces; }
 	const interface_list &interfaces() const { return m_interfaces; }
-	template<class _DeviceClass> bool interface(_DeviceClass *&intf) { intf = dynamic_cast<_DeviceClass *>(this); return (intf != nullptr); }
-	template<class _DeviceClass> bool interface(_DeviceClass *&intf) const { intf = dynamic_cast<const _DeviceClass *>(this); return (intf != nullptr); }
+	template<class _DeviceClass> bool get_interface(_DeviceClass *&intf) { intf = dynamic_cast<_DeviceClass *>(this); return (intf != nullptr); }
+	template<class _DeviceClass> bool get_interface(_DeviceClass *&intf) const { intf = dynamic_cast<const _DeviceClass *>(this); return (intf != nullptr); }
 
 	// specialized helpers for common core interfaces
 	bool interface(device_execute_interface *&intf) { intf = m_interfaces.m_execute; return (intf != nullptr); }
@@ -667,7 +667,7 @@ private:
 		{
 			// advance until finding a device with the interface
 			for ( ; m_curdevice != nullptr; advance())
-				if (m_curdevice->interface(m_interface))
+				if (m_curdevice->get_interface(m_interface))
 					return;
 
 			// if we run out of devices, make sure the interface pointer is null

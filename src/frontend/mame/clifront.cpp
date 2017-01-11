@@ -1126,8 +1126,8 @@ void cli_frontend::output_single_softlist(FILE *out, software_list_device &swlis
 		for (const software_part &part : swinfo.parts())
 		{
 			fprintf(out, "\t\t\t<part name=\"%s\"", part.name().c_str());
-			if (!part.interface().empty())
-				fprintf(out, " interface=\"%s\"", part.interface().c_str());
+			if (!part.get_interface().empty())
+				fprintf(out, " interface=\"%s\"", part.get_interface().c_str());
 
 			fprintf(out, ">\n");
 

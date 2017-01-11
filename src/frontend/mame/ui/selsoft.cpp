@@ -563,7 +563,7 @@ void menu_select_software::build_software_list()
 				tmpmatches.part = part.name();
 				tmpmatches.driver = m_driver;
 				tmpmatches.listname = swlist.list_name();
-				tmpmatches.interface = part.interface();
+				tmpmatches.interface = part.get_interface();
 				tmpmatches.startempty = 0;
 				tmpmatches.parentlongname.clear();
 				tmpmatches.usage.clear();

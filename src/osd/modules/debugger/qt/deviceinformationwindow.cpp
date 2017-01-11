@@ -64,7 +64,7 @@ void DeviceInformationWindow::fill_device_information()
 	vLayout->addWidget(primaryFrame);
 
 	device_memory_interface *d_memory;
-	if(m_device->interface(d_memory)) {
+	if(m_device->get_interface(d_memory)) {
 		QFrame *f = new QFrame(mainWindowFrame);
 		f->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
 		QVBoxLayout *vb = new QVBoxLayout(f);
